@@ -10,6 +10,6 @@ $(document).on('keypress', '.raidmanager_form input,select', function(e) {
 // ----------------------------------------------------------------------------
 // Copies selected user name on playercreation into field fopr the first char
 // ----------------------------------------------------------------------------
-$(document).on('change', '#raidmanager_player_smfuser', function() {
-    $('#raidmanager_char_name').val($('#raidmanager_player_smfuser option:selected').text());
+$(document).on('change select dblclick', '#web_raidmanager_player_id_player', function() {
+    $('#web_raidmanager_player_char_name').val($('#web_raidmanager_player_id_player option:selected').text());
 });
