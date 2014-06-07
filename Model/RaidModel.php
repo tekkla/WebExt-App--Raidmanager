@@ -10,11 +10,10 @@ use Web\Framework\Lib\Data;
 
 class RaidModel extends Model
 {
-	public $tbl = 'app_raidmanager_raids';
-	public $alias = 'raids';
-	public $pk = 'id_raid';
-
-	public $validate = array(
+	protected $tbl = 'app_raidmanager_raids';
+	protected $alias = 'raids';
+	protected $pk = 'id_raid';
+	protected $validate = array(
 		'destination' => 'empty',
 		'starttime' => array('empty', 'date'),
 		'endtime' => array('empty', 'date'),
