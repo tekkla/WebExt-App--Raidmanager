@@ -101,8 +101,8 @@ class SubscriptionModel extends Model
 	 */
 	public function deleteSubscriptionByID($id)
 	{
-		$this->setFilter('id_subscription={int:pk}');
-		$this->setParameter('pk', $id);
+		$this->setFilter('id_subscription={int:id_subscription}');
+		$this->setParameter('id_subscription', $id);
 		$this->delete();
 	}
 
