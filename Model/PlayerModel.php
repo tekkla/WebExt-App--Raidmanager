@@ -355,9 +355,8 @@ class PlayerModel extends Model
 	public function hasActivePlayer()
 	{
 		$this->setFilter('state=3');
-		$this->read('pk');
+		$this->read('key');
 		return $this->hasData();
 	}
-
 }
 ?>
