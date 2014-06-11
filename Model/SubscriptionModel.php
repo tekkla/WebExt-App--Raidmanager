@@ -187,7 +187,7 @@ class SubscriptionModel extends Model
 				break;
 
 			default :
-				Throw new Error('Raidmanager: The given subscriptiontype is wrong. Set it to "enrolled" or "resigned"');
+				Throw new Error('The given subscriptiontype is wrong.', 1000, array('enrolled', 'resigned'));
 		}
 
 		$this->setFilter($filter);
@@ -225,7 +225,7 @@ class SubscriptionModel extends Model
 				break;
 
 			default :
-				Throw new Error('Raidmanager: The given subscriptiontype is wrong. Set it to "enrolled" or "resigned"');
+				Throw new Error('The given subscription set type is wrong.', 1000, array(0,1,2));
 		}
 
 		// build enrollbuttons
