@@ -343,213 +343,252 @@ final class Raidmanager extends App
             'player',  // manage player roster
             'stats',  // see stats
             'profiles' // see all profiles
-        )
+                )
     );
 
     // Used routes
     public $routes = array(
-        'raid_index' => array(
+        array(
+            'name' => 'raid_index',
             'route' => '/?',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_start' => array(
+        array(
+            'name' => 'raid_start',
             'route' => '/raid',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_selected' => array(
+        array(
+            'name' => 'raid_selected',
             'route' => '/raid/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_data' => array(
+        array(
+            'name' => 'raid_data',
             'route' => '/raid/index/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'index'
         ),
-        'raid_add' => array(
+        array(
+            'name' => 'raid_add',
             'method' => 'GET|POST',
             'route' => '/raid/add/[i:back_to]?',
             'ctrl' => 'raid',
             'action' => 'edit'
         ),
-        'raid_edit' => array(
+        array(
+            'name' => 'raid_edit',
             'method' => 'GET|POST',
             'route' => '/raid/edit/[i:id_raid]/[i:back_to]',
             'ctrl' => 'raid',
             'action' => 'edit'
         ),
-        'raid_infos' => array(
+        array(
+            'name' => 'raid_infos',
             'route' => '/raid/infos/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'infos'
         ),
-        'raid_autoadd' => array(
+        array(
+            'name' => 'raid_autoadd',
             'route' => '/raid/autoadd',
             'ctrl' => 'raid',
             'action' => 'autoadd'
         ),
-        'raid_delete' => array(
+        array(
+            'name' => 'raid_delete',
             'route' => '/raid/delete/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'delete'
         ),
-        'subscription_index' => array(
+        array(
+            'name' => 'subscription_index',
             'route' => '/raid/subscription/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'index'
         ),
-        'subscription_edit' => array(
+        array(
+            'name' => 'subscription_edit',
             'route' => '/raid/subscription/edit/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'edit'
         ),
-        'subscription_enrollform' => array(
+        array(
+            'name' => 'subscription_enrollform',
             'method' => 'GET|POST',
             'route' => '/raid/subscription/enrollform/[i:id_raid]/[i:id_subscription]/[i:id_player]/[i:state]/[a:from]',
             'ctrl' => 'subscription',
             'action' => 'enrollform'
         ),
-        'subscription_save' => array(
+        array(
+            'name' => 'subscription_save',
             'method' => 'POST',
             'route' => '/raid/subscription/save/[a:from]/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'save'
         ),
-        'comment_index' => array(
+        array(
+            'name' => 'comment_index',
             'route' => '/raid/comment/index/[i:id_raid]',
             'ctrl' => 'comment',
             'action' => 'index'
         ),
-        'comment_delete' => array(
+        array(
+            'name' => 'comment_delete',
             'route' => '/raid/comment/delete/[i:id_raid]/[i:id_comment]',
             'ctrl' => 'comment',
             'action' => 'delete'
         ),
-        'setup_index' => array(
+        array(
+            'name' => 'setup_index',
             'route' => '/raid/setup/index/[i:id_setup]',
             'ctrl' => 'setup',
             'action' => 'index'
         ),
-        'setup_complete' => array(
+        array(
+            'name' => 'setup_complete',
             'route' => '/raid/setup/complete/[i:id_raid]',
             'ctrl' => 'setup',
             'action' => 'complete'
         ),
-        'setup_add' => array(
+        array(
+            'name' => 'setup_add',
             'method' => 'GET|POST',
             'route' => '/raid/setup/add/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'edit'
         ),
-        'setup_edit' => array(
+        array(
+            'name' => 'setup_edit',
             'method' => 'GET|POST',
             'route' => '/raid/setup/edit/[i:id_setup]/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'edit'
         ),
-        'setup_save' => array(
+        array(
+            'name' => 'setup_save',
             'method' => 'POST',
             'route' => '/raid/setup/save/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'save'
         ),
-        'setup_delete' => array(
+        array(
+            'name' => 'setup_delete',
             'route' => '/raid/setup/delete/[i:id_setup]/[i:id_raid]',
             'ctrl' => 'setup',
             'action' => 'delete'
         ),
-        'setlist_edit' => array(
+        array(
+            'name' => 'setlist_edit',
             'route' => '/raid/setlist/edit/[i:id_raid]/[i:id_setup]',
             'ctrl' => 'setlist',
             'action' => 'edit'
         ),
-        'setlist_set' => array(
+        array(
+            'name' => 'setlist_set',
             'route' => '/raid/setlist/set/[i:id_setup]/[i:id_char]/[i:id_category]',
             'ctrl' => 'setlist',
             'action' => 'set_player'
         ),
-        'setlist_switch' => array(
+        array(
+            'name' => 'setlist_switch',
             'route' => '/raid/setlist/switch/[i:id_setlist]/[i:id_category]',
             'ctrl' => 'setlist',
             'action' => 'switch_player'
         ),
-        'setlist_unset' => array(
+        array(
+            'name' => 'setlist_unset',
             'route' => '/raid/setlist/unset/[i:id_setlist]',
             'ctrl' => 'setlist',
             'action' => 'unset_player'
         ),
-        'setlist_save' => array(
+        array(
+            'name' => 'setlist_save',
             'route' => '/raid/setlist/save/[i:id_setup]/[i:id_char]/[i:id_player]/[i:id_setlist]/[i:set_as]/[i:set_from]',
             'ctrl' => 'setlist',
             'action' => 'save'
         ),
-        'player_start' => array(
+        array(
+            'name' => 'player_start',
             'route' => '/player',
             'ctrl' => 'player',
             'action' => 'complete'
         ),
-        'player_index' => array(
+        array(
+            'name' => 'player_index',
             'route' => '/player/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'index'
         ),
-        'player_edit' => array(
+        array(
+            'name' => 'player_edit',
             'method' => 'GET|POST',
             'route' => '/player/edit/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'edit'
         ),
-        'player_delete' => array(
+        array(
+            'name' => 'player_delete',
             'route' => '/player/delete/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'delete'
         ),
-        'player_add' => array(
+        array(
+            'name' => 'player_add',
             'method' => 'POST',
             'route' => '/player/add',
             'ctrl' => 'player',
             'action' => 'create'
         ),
-        'char_list' => array(
+        array(
+            'name' => 'char_list',
             'route' => '/charlist/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'charlist'
         ),
-        'char_add' => array(
+        array(
+            'name' => 'char_add',
             'method' => 'GET|POST',
             'route' => '/char/add/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'edit'
         ),
-        'char_edit' => array(
+        array(
+            'name' => 'char_edit',
             'method' => 'GET|POST',
             'route' => '/char/edit/[i:id_player]/[i:id_char]?',
             'ctrl' => 'char',
             'action' => 'edit'
         ),
-        'char_delete' => array(
+        array(
+            'name' => 'char_delete',
             'route' => '/char/delete/[i:id_char]/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'delete'
         ),
-        'stats' => array(
+        array(
+            'name' => 'stats',
             'route' => '/stats',
             'ctrl' => 'stats',
             'action' => 'index'
         ),
-        'stats_subs' => array(
+        array(
+            'name' => 'stats_subs',
             'route' => '/stats/subs/[i:month]/[i:year]',
             'ctrl' => 'stats',
             'action' => 'subs'
         ),
-        'stats_player' => array(
+        array(
+            'name' => 'stats_player',
             'route' => '/stats/player/[i:month]/[i:year]',
             'ctrl' => 'stats',
             'action' => 'player'
         ),
-        'reset' => array(
+        array(
+            'name' => 'reset',
             'route' => '/reset',
             'ctrl' => 'raid',
             'action' => 'reset'
