@@ -3,7 +3,8 @@ namespace Web\Apps\Raidmanager\Model;
 
 use Web\Framework\Lib\Model;
 use Web\Framework\Lib\Data;
-use Web\Framework\Lib\Errors\ParameterNotSetError;
+use Web\Framework\Lib\Error;
+
 
 class SetupModel extends Model
 {
@@ -50,7 +51,7 @@ class SetupModel extends Model
         else
         {
             if (!isset($id_raid))
-                Throw new ParameterNotSetError(__METHOD__, 'id_raid');
+                Throw new Error('Needed parameter not set', 1001, array('id_raid'));
 
             // Create default data
             $data = new Data();
