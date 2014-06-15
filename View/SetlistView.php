@@ -1,12 +1,10 @@
 <?php
-
 namespace Web\Apps\Raidmanager\View;
 
 use Web\Framework\Lib\View;
 
 class SetlistView extends View
 {
-
 	public function Complete()
 	{
 		$this->Index();
@@ -139,11 +137,14 @@ class SetlistView extends View
 
 	private function createSelection($side, $category)
 	{
-		if(isset($this->{$side . '_'. $category}))
+		if($this->{$side . '_'. $category})
 		{
 			foreach($this->{$side . '_'. $category} as $player)
+			{
 				echo '
 				<div class="app-raidmanager-setlist-player app-raidmanager-class-', $player->class, '">', $player->char_name, $player->actionbar, '</div>';
+
+			}
 		}
 		else
 			echo '<p>', $this->{'none_' . $side} .'</p>';
