@@ -1,5 +1,4 @@
 <?php
-
 namespace Web\Apps\Raidmanager\Controller;
 
 use Web\Framework\Lib\Controller;
@@ -7,28 +6,24 @@ use Web\Framework\Html\Controls\Actionbar;
 
 class SetupController extends Controller
 {
-	public $actions = array(
-		'Edit' => array(
-			'access' => 'raidmanager_perm_setup',
-		),
-		'Delete' => array(
-			'access' => 'raidmanager_perm_setup',
-		),
-	);
+    protected $access = array(
+    	'Edit' => 'raidmanager_perm_setup',
+        'Delete' => 'raidmanager_perm_setup'
+    );
 
-	function Index($id_setup)
+	public function Index($id_setup)
 	{
 		// create infos
 		$this->Infos($id_setup);
 
 		// create setlist
-		$this->setVar('setlist_'.$id_setup, $this->app->getController('Setlist')->run('complete', array('id_setup' => $id_setup)));
+		$this->setVar('setlist_'.$id_setup, $this->getController('Setlist')->run('Complete', array('id_setup' => $id_setup)));
 
 		// ajax definition
 		$this->ajax->setTarget('#raidmanager_setup_'.$id_setup);
 	}
 
-	function Complete($id_raid)
+	public function Complete($id_raid)
 	{
 		$setup_keys = $this->model->getIdsByRaid($id_raid);
 
@@ -40,7 +35,7 @@ class SetupController extends Controller
 		$this->ajax->setTarget('#raidmanager_setups');
 	}
 
-	function Infos($id_setup)
+	public function Infos($id_setup)
 	{
 		$data = $this->model->getInfos($id_setup);
 
@@ -82,7 +77,7 @@ class SetupController extends Controller
 		$this->setVar('infos_'.$id_setup, $data);
 	}
 
-	function Edit($back_to, $id_raid, $id_setup = null)
+	public function Edit($back_to, $id_raid, $id_setup = null)
 	{
 		$post = $this->request->getPost();
 
@@ -110,15 +105,11 @@ class SetupController extends Controller
 			}
 		}
 
-		// ------------------------------
-		// DATA
-		// ------------------------------
+		// Do we need to load data?
 		if ($this->model->hasNoData())
 			$this->model->getEditSetup($id_raid, $id_setup);
 
-			// ------------------------------
-			// TEXT
-			// ------------------------------
+		// Set headline text
 		$this->setVar('headline', $this->txt('setup_'.$this->model->data->mode));
 
 		// ------------------------------
@@ -126,7 +117,6 @@ class SetupController extends Controller
 		// ------------------------------
 
 		// Prepare parameters
-
 		$params = array(
 			'back_to' => $back_to,
 			'id_raid' => $id_raid
@@ -166,7 +156,7 @@ class SetupController extends Controller
 			'heal'
 		);
 
-		foreach ( $categories as $cat )
+		foreach ($categories as $cat)
 			$form->createElement('number', 'need_'.$cat)->setSize(2)->setMaxlenght(2)->addAttribute('min', 0);
 
 		// Other number fields
@@ -175,14 +165,13 @@ class SetupController extends Controller
 			'position'
 		);
 
-		foreach ( $fields as $fld )
+		foreach ($fields as $fld)
 			$form->createElement('number', $fld)->setSize(2)->setMaxlenght(2);
 
+		// Send form to view
 		$this->setVar('form', $form);
 
-		// ------------------------------
-		// ACTIONBAR
-		// ------------------------------
+		// Actionbar
 		$actionbar = new Actionbar();
 
 		// Build cancel button
@@ -194,7 +183,6 @@ class SetupController extends Controller
 		if ($id_setup)
 			$button->setRoute('raidmanager_setup_index', array('id_setup' => $id_setup));
 
-
 		// Build save button
 		$params = array(
 			'id_raid' => $id_raid,
@@ -203,27 +191,24 @@ class SetupController extends Controller
 
 		$actionbar->createButton('save')->setForm($form->getId())->setRoute('raidmanager_setup_save', $params);
 
-		// build actionbar
+		// Build actionbar
 		$this->setVar('actionbar', $actionbar);
 
-		// ------------------------------
-		// RESPONSE
-		// ------------------------------
+		// Create ajax response
 		$target = $id_setup ? 'raidmanager_setup_'.$id_setup : 'raidmanager_setups';
 		$this->ajax->setTarget('#'.$target);
 	}
 
-	function Delete($id_setup, $id_raid)
+	public function Delete($id_setup, $id_raid)
 	{
-		// first delete setlists
+		// First delete setlists
 		$this->getModel('Setlist')->deleteBySetup($id_setup);
 
-		// then the setup
+		// Then the setup
 		$this->model->delete($id_setup);
 
-		// reload setup area
-		$this->run('complete', array('id_raid' => $id_raid));
+		// Reload setup area
+		$this->run('Complete', array('id_raid' => $id_raid));
 	}
 }
-
 ?>
