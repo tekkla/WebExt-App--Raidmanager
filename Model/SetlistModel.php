@@ -1,44 +1,23 @@
 <?php
 namespace Web\Apps\Raidmanager\Model;
 
-/**
- * Model for Setlists
- *
- * @name      	WebExtension -  Raidmanager App
- * @copyright 	Michael "Tekkla" Zorn, Feb. 2014
- * @license  	BSD http://opensource.org/licenses/BSD-3-Clause
- * @version 	1.0
- * @author 		Michael "Tekkla" Zorn
- */
-
-if (!defined('WEB'))
-	die('No access...');
-
-/**
- * Parent lib model class
- */
 use Web\Framework\Lib\Model;
-
-/**
- * Needed helper
- */
 use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Lib\Data;
 
-
-class SetlistModel extends Model
+/**
+ * Setlist model
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
+ */
+final class SetlistModel extends Model
 {
-	/**
-	 * Related database table
-	 * @var string
-	 */
-	public $tbl = 'app_raidmanager_setlists';
-
-	/**
-	 * Used table alias in queries
-	 * @var string
-	 */
-	public $alias = 'setlist';
+	protected $tbl = 'app_raidmanager_setlists';
+	protected $alias = 'setlist';
+	protected $pk = 'id_setlist';
 
 	/**
 	 * Get all players set for one setup
@@ -47,32 +26,33 @@ class SetlistModel extends Model
 	 */
 	public function getSet($id_setup)
 	{
-		$this->setField(array(
-			'setlist.id_setlist',
-			'setlist.id_raid',
-			'setlist.id_player',
-			'setlist.id_char',
-			'setlist.set_as',
-			'chars.char_name',
-			'chars.id_class',
-			'chars.id_category',
-			'chars.is_main',
-			'class.class',
-			'class.color',
-			'cat1.category AS category_set',
-			'cat2.category AS category_org'
+		$this->read(array(
+		    'type' => '*',
+		    'field' => array(
+		        'setlist.id_setlist',
+		        'setlist.id_raid',
+		        'setlist.id_player',
+		        'setlist.id_char',
+		        'setlist.set_as',
+		        'chars.char_name',
+		        'chars.id_class',
+		        'chars.id_category',
+		        'chars.is_main',
+		        'class.class',
+		        'class.color',
+		        'cat1.category AS category_set',
+		        'cat2.category AS category_org'
+		    ),
+		    'join' => array(
+		        array('app_raidmanager_chars', 'chars', 'INNER', 'setlist.id_char = chars.id_char'),
+		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class = class.id_class'),
+		        array('app_raidmanager_categories', 'cat1', 'INNER', 'setlist.set_as = cat1.id_category'),
+		        array('app_raidmanager_categories', 'cat2', 'INNER', 'chars.id_category = cat2.id_category'),
+		    ),
+		    'filter' => 'setlist.id_setup={int:id_setup}',
+		    'param' => array('id_setup' => $id_setup),
+		    'order' => 'setlist.set_as, class.id_class, chars.char_name',
 		));
-		$this->setJoin('app_raidmanager_chars', 'chars', 'INNER', 'setlist.id_char = chars.id_char');
-		$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class = class.id_class');
-		$this->addJoin('app_raidmanager_categories', 'cat1', 'INNER', 'setlist.set_as = cat1.id_category');
-		$this->addJoin('app_raidmanager_categories', 'cat2', 'INNER', 'chars.id_category = cat2.id_category');
-		$this->setFilter('setlist.id_setup={int:id_setup}');
-		$this->setParameter('id_setup', $id_setup);
-		$this->setOrder('setlist.set_as, class.id_class, chars.char_name');
-
-		$out = array();
-
-		$this->read('*');
 
 		// no data! return false
 		if (!$this->hasData())
@@ -107,67 +87,52 @@ class SetlistModel extends Model
 
 	public function getAvail($id_setup)
 	{
-		$this->reset();
-
 		// load the player ids of set player
-		$this->setField('id_player');
-		$this->setFilter('id_setup={int:id_setup}');
-		$this->setParameter('id_setup', $id_setup);
-		$this->read('keysonly');
+		$this->read(array(
+			'type' => 'key',
+		    'field' => 'id_player',
+		    'filter' => 'id_setup={int:id_setup}',
+		    'param' => array('id_setup' => $id_setup)
+		));
 
 		// from her we want to get the playerdata from all the players who are not set
-		$subs = $this->app->getModel('Subscription');
-		$subs->setField(array(
-			'chars.id_char',
-			'subs.id_player',
-			'chars.char_name',
-			'chars.is_main',
-			'cats.id_category',
-			'cats.category',
-			'class.class',
-			'class.color'
-		));
-		$subs->addJoin('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player');
-		$subs->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-		$subs->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-
-		$subs->setParameter(array(
-			'id_raid' => $this->getRaidIdOfSetlist($id_setup),
-			'status' => 1,
-		));
+		$query = array(
+		    'type' => '*',
+		    'field' => array(
+    			'chars.id_char',
+    			'subs.id_player',
+    			'chars.char_name',
+    			'chars.is_main',
+    			'cats.id_category',
+    			'cats.category',
+    			'class.class',
+    			'class.color'
+		    ),
+		    'join' => array(
+		        array('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player'),
+		        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class'),
+		    ),
+		    'param' => array(
+		        'id_raid' => $this->getRaidIdOfSetlist($id_setup),
+		        'status' => 1,
+		    ),
+		    'order' => 'chars.char_name'
+		);
 
 		// if no player is set, all player in substable will be returned
-		if (!$this->data)
-			$subs->setFilter('subs.state=1 AND subs.id_raid={int:id_raid}');
+		if ($this->hasNoData())
+			$query['filter'] = 'subs.state=1 AND subs.id_raid={int:id_raid}';
 		else
 		{
 			// there are players set, get all from subs except them.
-			$subs->setFilter('subs.state=1 AND subs.id_raid={int:id_raid} AND subs.id_player NOT IN ({array_int:setplayer})');
-			$subs->addParameter('setplayer', (array) $this->data);
+			$query['filter'] = 'subs.state=1 AND subs.id_raid={int:id_raid} AND subs.id_player NOT IN ({array_int:setplayer})';
+			$query['param']['setplayer'] = $this->data;
 		}
 
-		$subs->setOrder('chars.char_name');
-
-		$this->data = $subs->read('*');
+		$this->data = $this->getModel('Subscription')->read($query);
 
 		return $this->data;
-
-		foreach ($subs->read() as $avail)
-		{
-			switch ($avail->id_category)
-			{
-				case 1: $cat = 'tank'; break;
-				case 2: $cat = 'damage'; break;
-				case 3: $cat = 'heal'; break;
-				default: $cat = 'tank'; break;
-			}
-
-			$out[$cat][] = $avail;
-		}
-
-		$this->reset();
-
-		return $out;
 	}
 
 
@@ -204,40 +169,41 @@ class SetlistModel extends Model
 
 			case 'set':
 				return $this->getEditSet($id_setup, $id_category);
-				break;
-		}
-	}
+                break;
+        }
+    }
 
-	public function getEditSet($id_setup, $id_category)
-	{
-		$this->setField(array(
-			'setlist.id_setlist',
-			'setlist.id_setup',
-			'setlist.id_player',
-			'setlist.id_char',
-			'setlist.set_as',
-			'chars.char_name',
-			'chars.is_main',
-			'cats.id_category',
-			'cats.category',
-			'class.class',
-			'class.color',
-			'class.css',
-		));
-		$this->setJoin('app_raidmanager_chars', 'chars', 'INNER', 'setlist.id_char=chars.id_char');
-		$this->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-		$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-		$this->setFilter('setlist.id_setup={int:id_setup} AND setlist.set_as={int:set_as}');
-		$this->setParameter(array(
-			'id_setup' => $id_setup,
-			'set_as' => $id_category
-		));
+    public function getEditSet($id_setup, $id_category)
+    {
+        $query = array(
+            'type' => '*',
+            'field' => array(
+                'setlist.id_setlist',
+                'setlist.id_setup',
+                'setlist.id_player',
+                'setlist.id_char',
+                'setlist.set_as',
+                'chars.char_name',
+                'chars.is_main',
+                'cats.id_category',
+                'cats.category',
+                'class.class',
+                'class.color',
+                'class.css'
+            ),
+            'join' => array(
+                array('app_raidmanager_chars', 'chars', 'INNER', 'setlist.id_char=chars.id_char'),
+                array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+                array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class')
+            ),
+            'filter' => 'setlist.id_setup={int:id_setup} AND setlist.set_as={int:set_as}',
+            'param' => array(
+    		    'id_setup' => $id_setup,
+    		    'set_as' => $id_category
+    		),
+        );
 
-		$this->read('*', 'addSetActionbar');
-
-		$this->reset();
-
-		return $this->data;
+        return $this->read($query, 'addSetActionbar');
 	}
 
 	public function addSetActionbar($player)
@@ -286,51 +252,51 @@ class SetlistModel extends Model
 	public function getEditAvail($id_setup, $id_category)
 	{
 		// load the player ids of set player
-		$this->setField('id_player');
-		$this->setFilter('id_setup={int:id_setup}');
-		$this->setParameter('id_setup', $id_setup);
-		$set = $this->read('keysonly');
+		$this->read(array(
+		    'type' => 'key',
+		    'field' => 'id_player',
+		    'filter' => 'id_setup={int:id_setup}',
+		    'param' => array('id_setup' => $id_setup)
+		));
 
 		// from her we want to get the playerdata from all the players who are not set
-		$subs = $this->getModel('Subscription');
-		$subs->setField(array(
-			'chars.id_char',
-			'subs.id_player',
-			'chars.char_name',
-			'chars.is_main',
-			'cats.id_category',
-			'cats.category',
-			'class.class',
-			'class.color',
-			'class.css',
-			$id_setup . ' AS id_setup',
-		));
-		$subs->addJoin('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player');
-		$subs->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-		$subs->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-
-		$subs->setParameter(array(
-			'id_raid' => $this->getRaidIdOfSetlist($id_setup),
-			'id_category' => $id_category
-		));
+		$query = array(
+		    'type' => '*',
+		    'field' => array(
+    			'chars.id_char',
+    			'subs.id_player',
+    			'chars.char_name',
+    			'chars.is_main',
+    			'cats.id_category',
+    			'cats.category',
+    			'class.class',
+    			'class.color',
+    			'class.css',
+    			$id_setup . ' AS id_setup',
+		    ),
+		    'join' => array(
+		        array('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player'),
+		        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class')
+		    ),
+		    'param' => array(
+		        'id_raid' => $this->getRaidIdOfSetlist($id_setup),
+		        'id_category' => $id_category
+		    ),
+		    'order' => 'chars.is_main, class.class'
+		);
 
 		// if no player is set, all player in substable will be returned
-		if (empty($set))
-			$subs->setFilter('cats.id_category={int:id_category} AND subs.state=1 AND subs.id_raid={int:id_raid}');
+		if ($this->hasNoData())
+			$query['filter'] = 'cats.id_category={int:id_category} AND subs.state=1 AND subs.id_raid={int:id_raid}';
 		else
 		{
 			// there are players set, get all from subs except them.
-			$subs->setFilter('cats.id_category={int:id_category} AND subs.state=1 AND subs.id_raid={int:id_raid} AND subs.id_player NOT IN ({array_int:setplayer})');
-			$subs->addParameter('setplayer', (array) $set);
+			$query['filter'] = 'cats.id_category={int:id_category} AND subs.state=1 AND subs.id_raid={int:id_raid} AND subs.id_player NOT IN ({array_int:setplayer})';
+			$query['param']['setplayer'] =  $this->data;
 		}
 
-		$subs->setOrder('chars.is_main, class.class');
-
-		$this->data = $subs->read('*', 'Setlist::addAvailActionbar');
-
-		$this->reset();
-
-		return $this->data;
+		return $this->data = $this->getModel('Subscription')->read($query, 'Setlist::addAvailActionbar');
 	}
 
 
@@ -339,19 +305,22 @@ class SetlistModel extends Model
 		// charakter flag
 		if ($player->is_main == 0)
 		{
-			$mainchar = $this->getModel('Char')->setField(array(
-													'chars.char_name',
-													'class.css'
-												))
-												->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class')
-												->setFilter('chars.id_player={int:id_player} AND chars.is_main=1')
-												->setParameter('id_player', $player->id_player)
-												->read();
+		    $query = array(
+		        'field' => array(
+		            'chars.char_name',
+		        	'class.css'
+		        ),
+		        'join' => array(
+		            array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class')
+		        ),
+		        'filter' => 'chars.id_player={int:id_player} AND chars.is_main=1',
+		        'param' => array('id_player' => $player->id_player)
+		    );
+
+			$mainchar = $this->getModel('Char')->read($query);
 
 			$player->char_name .= ' <span class="' . $mainchar->css .'">(' . $mainchar->char_name . ')</span>';
 		}
-
-
 
 		// create the unset and set buttons for categories
 		// the player ist not currently set to
@@ -437,9 +406,6 @@ class SetlistModel extends Model
 		));
 		$this->delete();
 	}
-
-
-	###############################################################
 
 	public function setPlayer($id_setup, $id_char, $id_category)
 	{

@@ -3,21 +3,32 @@ namespace Web\Apps\Raidmanager\Model;
 
 use Web\Framework\Lib\Model;
 
-
-class CharclassModel extends Model
+/**
+ * Charclass model
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
+ */
+final class CharclassModel extends Model
 {
-	public $tbl = 'app_raidmanager_classes';
-	public $alias = 'classes';
-	public $pk = 'id_class';
+	protected $tbl = 'app_raidmanager_classes';
+	protected $alias = 'classes';
+	protected $pk = 'id_class';
 
 	public function getClasses()
 	{
-		$this->setField(array(
-			'id_class',
-			"CONCAT('class_', class)"
-		));
-		$this->setOrder('class');
-		$this->read('2col', 'translate');
+		$query = array(
+		    'type' => '2col',
+			'field' => array(
+			    'id_class',
+			    "CONCAT('class_', class)"
+			),
+		    'order' => 'class'
+		);
+
+		$this->read($query, 'translate');
 
 		$out = $this->data->getProperties();
 

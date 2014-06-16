@@ -2,21 +2,40 @@
 namespace Web\Apps\Raidmanager\Model;
 
 use Web\Framework\Lib\Model;
-
-use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Lib\Data;
+use Web\Framework\Html\Controls\Actionbar;
 
-class CharModel extends Model
+/**
+ * Char model
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
+ */
+final class CharModel extends Model
 {
-	public $tbl = 'app_raidmanager_chars';
-	public $alias = 'chars';
-	public $pk = 'id_char';
-
+	protected $tbl = 'app_raidmanager_chars';
+	protected $alias = 'chars';
+	protected $pk = 'id_char';
 	public $validate = array(
-		'char_name' => array('required', 'empty', array('min', 3)),
-		'id_player' => array('required', 'empty'),
-		'id_category' => array('required', 'empty'),
-		'id_class' => array('required', 'empty'),
+		'char_name' => array(
+		    'required',
+		    'empty',
+		    array('min', 3)
+		),
+		'id_player' => array(
+		    'required',
+		    'empty'
+		),
+		'id_category' => array(
+		    'required',
+		    'empty'
+		),
+		'id_class' => array(
+		    'required',
+		    'empty'
+		),
 	);
 
 	public function getCharTypes()
@@ -29,73 +48,72 @@ class CharModel extends Model
 
 	public function getCharlist($id_player)
 	{
-		$this->setField(array(
-			'chars.id_char',
-			'chars.char_name',
-			'chars.is_main',
-			'class.class',
-			'class.color',
-			'class.css',
-			'cats.category'
-		));
+		$query = array(
+		    'type' => '*',
+		    'field' => array(
+		        'chars.id_char',
+		        'chars.id_player',
+		        'chars.char_name',
+		        'chars.is_main',
+		        'class.class',
+		        'class.color',
+		        'class.css',
+		        'cats.category'
+		    ),
+		    'join' => array(
+		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class'),
+		        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+		    ),
+		    'filter' => 'chars.id_player={int:id_player}',
+		    'param' => array(
+		        'id_player' => $id_player
+		    ),
+		    'order' => 'chars.is_main DESC'
+		);
 
-		$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-		$this->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
+		return $this->read($query, 'extendChar');
+	}
 
-		$this->setFilter('chars.id_player={int:id_player}');
-		$this->setParameter('id_player', $id_player);
+	protected function extendChar(&$char)
+	{
+	    if (!$this->checkAccess('raidmanager_perm_player'))
+	        return $char;
 
-		$this->setOrder('chars.is_main DESC');
+    	$actionbar = new Actionbar();
 
-		$this->read('*');
+    	$params = array(
+   			'id_char' => $char->id_char,
+   			'id_player' => $char->id_player
+    	);
 
-		foreach($this->data as $char)
-		{
-			if ($this->checkAccess('raidmanager_perm_player')===true)
-			{
+	    // The edit button
+    	$actionbar->createButton('edit', 'ajax', 'icon')->setRoute('raidmanager_char_edit', $params);
 
-				$actionbar = new Actionbar();
+    	// Delete button only on non mainchars
+	    if ($char->is_main == 0)
+    		$actionbar->createButton('delete', 'ajax', 'icon')->setRoute('raidmanager_char_delete', $params);
 
-				$params = array(
-					'id_char' => $char->id_char,
-					'id_player' => $id_player
-				);
+    	$char->actionbar = $actionbar->build();
 
-				// the edit button
-				$actionbar->createButton('edit', 'ajax', 'icon')
-				     	  ->setRoute('raidmanager_char_edit', $params);
+	    if ($char->is_main == 1)
+	    	$char->char_name .= ' (Main)';
 
+	    // Translated category name
+	    $char->category = $this->txt('category_' . $char->category);
 
-				if ($this->countData() > 1 && $char->is_main == 0)
-				{
-					// the edit button
-					$actionbar->createButton('delete', 'ajax', 'icon')
-							  ->setRoute('raidmanager_char_delete', $params);
-
-				}
-
-				$char->actionbar = $actionbar->build();
-
-			}
-
-			if ($char->is_main == 1)
-				$char->char_name .= ' (Main)';
-
-			// translated category name
-			$char->category = $this->txt('category_' . $char->category);
-		}
-
-		return $this->data;
+	    return $char;
 	}
 
 	public function getMaincharName($id_player)
 	{
-		$this->setField('char_name');
-		$this->setFilter('id_player={int:id_player} AND is_main=1');
-		$this->setParameter('id_player', $id_player);
-		$this->read();
-
-		return $this->data->char_name;
+		return $this->read(array(
+			'type' => 'val',
+		    'field' => 'chars.char_name',
+		    'filter' => 'chars.id_player={int:id_player} AND chars.is_main=1',
+		    'param' => array(
+		        'id_player' => $id_player
+		    )
+		));
 	}
 
 	/**
@@ -111,24 +129,28 @@ class CharModel extends Model
 		if (isset($id_char))
 		{
 			// char edit, get some char data for use in form
-			$this->setField(array(
-				'chars.id_char',
-				'chars.char_name',
-				'chars.is_main',
-				'chars.id_class',
-				'chars.id_category',
-				'class.class',
-				'class.color',
-				'class.css',
-				'cats.category'
+			$this->read(array(
+			    'field' => array(
+			        'chars.id_char',
+			        'chars.char_name',
+			        'chars.is_main',
+			        'chars.id_class',
+			        'chars.id_category',
+			        'class.class',
+			        'class.color',
+			        'class.css',
+			        'cats.category'
+			    ),
+			    'join' => array(
+			        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class'),
+			        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+			    ),
+			    'filter' => 'chars.id_char={int:id_char}',
+			    'param' => array(
+			        'id_char' => $id_char
+			    ),
+			    'order' => 'chars.is_main',
 			));
-
-			$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-			$this->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-			$this->setFilter('chars.id_char={int:id_char}');
-			$this->setParameter('id_char', $id_char);
-			$this->setOrder('chars.is_main');
-			$this->read();
 
 			$this->data->mode = 'edit';
 		}
@@ -158,49 +180,48 @@ class CharModel extends Model
 		if (isset($this->data->char_name) && isset($this->data->char_name_compare) && $this->data->char_name == $this->data->char_name_compare)
 			return;
 
-		$model = $this->getModel();
-
-		$filter = 'char_name={string:char_name}';
-		$params = array('char_name' => $this->data->char_name);
+		$filter = 'chars.char_name={string:char_name}';
+		$params = array(
+		    'char_name' => $this->data->char_name
+		);
 
 		if (isset($this->data->id_char))
 		{
-			$filter .= ' AND id_char<>{int:id_char}';
+			$filter .= ' AND chars.id_char<>{int:id_char}';
 			$params['id_char'] = $this->data->id_char;
 		}
 
-		$model->setFilter($filter);
-		$model->setParameter($params);
-
-		$num_chars = $model->count();
-
-		if ( $num_chars != 0)
+		if ( $this->getModel()->count($filter, $params) != 0)
 			$this->addError('char_name', $this->txt('char_name_already_taken'));
 	}
 
 	public function createFirstChar($data)
 	{
-		$this->setData($data)->save();
+	    $this->data = $data;
+		$this->save();
 	}
 
+	/**
+	 * Sets all chars of one player (except the char provided by id_char) to be alts
+	 * @param int $id_player
+	 * @param int $id_char
+	 */
 	public function setCharsToTwink($id_player, $id_char)
 	{
-		$model = $this->getModel();
-
-		$model->setField('is_main');
-		$model->setFilter('chars.id_player={int:id_player} AND chars.id_char<>{int:id_char}');
-		$model->setParameter(array(
-			'is_main' => 0,
-			'id_player' => $id_player,
-			'id_char' => $id_char
+	    $this->getModel()->update(array(
+		    'field' => 'is_main',
+		    'filter' => 'id_player={int:id_player} AND id_char<>{int:id_char}',
+		    'param' => array(
+    			'is_main' => 0,
+    			'id_player' => $id_player,
+    			'id_char' => $id_char
+		    )
 		));
-
-		$model->update();
 	}
 
 	public function saveChar($data)
 	{
-		$this->setData($data);
+		$this->data = $data;
 
 		// on changed cha name we have to check for already existing charname
 		$this->checkNameExists();
@@ -218,15 +239,21 @@ class CharModel extends Model
 			$this->setCharsToTwink($this->data->id_player, $this->data->id_char);
 	}
 
+	/**
+	 * Deletes the char with the provided char id.
+	 * @param int $id_char
+	 */
 	public function deleteChar($id_char)
 	{
-		// remove char from setlists
-		$model_setlist = $this->getModel('Setlist');
-		$model_setlist->setFilter('id_char={int:id_char}')
-					  ->setParameter('id_char', $id_char)
-					  ->delete();
+		// Remove char from setlists
+	    $this->getModel('Setlist')->delete(array(
+			'filter' => 'setlists.id_char={int:id_char}',
+		    'param' => array(
+		        'id_char' => $id_char
+		    )
+		));
 
-		// delete char itself
+		// Delete char itself
 		$this->delete($id_char);
 	}
 }
