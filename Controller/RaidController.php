@@ -142,7 +142,8 @@ final class RaidController extends Controller
 			$actionbar->createButton('autoadd')
 							->setRoute('raidmanager_raid_autoadd', $params)
 							->setIcon('calendar')
-							->setTitle($this->txt('raid_autoraid'));
+							->setTitle($this->txt('raid_autoraid'))
+							->useFull();
 			$actionbar->createButton('delete')->setRoute('raidmanager_raid_delete', $params);
 
 			$this->setVar('actionbar', $actionbar);
