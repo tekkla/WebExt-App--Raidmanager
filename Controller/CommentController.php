@@ -92,7 +92,7 @@ class CommentController extends Controller
 		$this->setVar('comments', $comments);
 
 		$this->setVar(array(
-			'headline' => $this->txt('comment_headline') . ' (' . $comments->count() . ')',
+			'headline' => $this->txt('comment_headline') . ($comments ? ' (' . $comments->count() . ')' : ''),
 			'empty' => $this->txt('comment_empty')
 		));
 

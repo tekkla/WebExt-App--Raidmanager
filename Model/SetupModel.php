@@ -3,20 +3,21 @@ namespace Web\Apps\Raidmanager\Model;
 
 use Web\Framework\Lib\Model;
 use Web\Framework\Lib\Data;
-use Web\Framework\Lib\Errors\ParameterNotSetError;
+use Web\Framework\Lib\Error;
 
-class SetupModel extends Model
+/**
+ * Setup model
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
+ */
+final class SetupModel extends Model
 {
-    // Table in database
-    public $tbl = 'app_raidmanager_setups';
-
-    // Alias to use
-    public $alias = 'setups';
-
-    // Name of id columns
-    public $pk = 'id_setup';
-
-    // Validation rules
+    protected $tbl = 'app_raidmanager_setups';
+    protected $alias = 'setups';
+    protected $pk = 'id_setup';
     public $validate = array(
         'title' => array(
             'empty'
@@ -30,6 +31,9 @@ class SetupModel extends Model
         ),
         'need_heal' => array(
             'empty'
+        ),
+        'position' => array(
+            array('min', array(0, 'number'))
         )
     );
 
@@ -50,7 +54,7 @@ class SetupModel extends Model
         else
         {
             if (!isset($id_raid))
-                Throw new ParameterNotSetError(__METHOD__, 'id_raid');
+                Throw new Error('Needed parameter not set', 1001, array('id_raid'));
 
             // Create default data
             $data = new Data();
@@ -78,12 +82,12 @@ class SetupModel extends Model
      */
     public function getIdsByRaid($id_raid)
     {
-        // get the setups
-        $this->setField('id_setup');
-        $this->setFilter('id_raid={int:id_raid}');
-        $this->setParameter('id_raid', $id_raid);
-        $this->setOrder('position, id_setup');
-        return $this->read('keysonly');
+        return $this->read(array(
+            'type' => 'key',
+            'filter' => 'id_raid={int:id_raid}',
+            'param' => array('id_raid' => $id_raid),
+            'order' => 'position, id_setup'
+        ));
     }
 
     /**
@@ -118,9 +122,10 @@ class SetupModel extends Model
      */
     public function deleteByRaid($id_raid)
     {
-        $this->setFilter('id_raid={int:pk}');
-        $this->setParameter('pk', $id_raid);
-        $this->delete();
+        $this->delete(array(
+        	'filter' => 'id_raid={int:pk}',
+            'param' => array('pk' => $id_raid),
+        ));
     }
 
     /**
@@ -180,11 +185,15 @@ class SetupModel extends Model
      */
     public function getFutureSetupIDs()
     {
-        return $this->setField('setups.id_setup')
-                    ->setJoin('app_raidmanager_raids', 'raids', 'INNER', 'setups.id_raid = raids.id_raid')
-                    ->setFilter('raids.starttime>{int:starttime}')
-                    ->setParameter('starttime', time())
-                    ->read('keysonly');
+        return $this->read(array(
+            'type' => 'key',
+        	'field' => 'setups.id_setup',
+            'join' => array(
+                array('app_raidmanager_raids', 'raids', 'INNER', 'setups.id_raid = raids.id_raid')
+            ),
+            'filter' => 'raids.starttime>{int:starttime}',
+            'param' => array('starttime' => time())
+         ));
     }
 }
 ?>

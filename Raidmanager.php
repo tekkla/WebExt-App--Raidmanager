@@ -1,20 +1,19 @@
 <?php
-
 namespace Web\Apps\Raidmanager;
+
+use Web\Framework\Lib\Url;
+use Web\Framework\Lib\App;
+use Web\Framework\Lib\User;
+
+// Check for direct file access
+if (!defined('WEB'))
+    die('Cannot run without WebExt framework...');
 
 /**
  * Main app class of Raidmanager app
  * @author Michael Zorn (tekkla@tekkla.de)
  * @copyright 2014
  */
-
-if (!defined('WEB'))
-	die('Cannot run without WebExt framework...');
-
-// Used classes
-use Web\Framework\Lib\Url;
-use Web\Framework\Lib\App;
-use Web\Framework\Lib\User;
 
 final class Raidmanager extends App
 {
@@ -56,12 +55,7 @@ final class Raidmanager extends App
         'raid_destination' => array(
             'group' => 'raid',
             'default' => 'New raid',
-            'control' => array(
-                'text',
-                array(
-                    'size' => 50
-                )
-            ),
+            'control' => array('text', array('size' => 50)),
             'validate' => array(
                 'required',
                 'empty'
@@ -70,13 +64,7 @@ final class Raidmanager extends App
         'raid_specials' => array(
             'group' => 'raid',
             'default' => '',
-            'control' => array(
-                'textarea',
-                array(
-                    'cols' => 50,
-                    'rows' => 5
-                )
-            )
+            'control' => array('textarea', array('cols' => 50, 'rows' => 5))
         ),
         'raid_autosignon' => array(
             'group' => 'raid',
@@ -86,49 +74,26 @@ final class Raidmanager extends App
         'raid_weekday_start' => array(
             'group' => 'raid',
             'default' => 3,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 0,
-                    'max' => 6
-                )
-            ),
+            'control' => array('number', array('min' => 0, 'max' => 6)),
             'validate' => array(
                 'required',
                 'int',
-                array(
-                    'range',
-                    array(
-                        0,
-                        6
-                    )
-                )
+                array('range', array(0, 6))
             )
         ),
         'raid_new_days_ahead' => array(
             'group' => 'raid',
             'default' => 5,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 1
-                )
-            ),
+            'control' => array('number', array('min' => 1)),
             'validate' => array(
                 'required',
-                array(
-                    'min',
-                    1
-                )
+                array('min', 1)
             )
         ),
         'raid_days' => array(
             'group' => 'raid',
             'control' => 'optiongroup',
-            'data' => array(
-                'model',
-                'Raidmanager::Calendar::getDays'
-            )
+            'data' => array('model', 'Raidmanager::Calendar::getDays')
         ),
         'raid_time_start' => array(
             'group' => 'raid',
@@ -142,20 +107,11 @@ final class Raidmanager extends App
         'raid_duration' => array(
             'group' => 'raid',
             'default' => 180,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 1,
-                    'max' => 1440
-                )
-            ),
+            'control' => array('number', array('min' => 1, 'max' => 1440)),
             'validate' => array(
                 'required',
                 'int',
-                array(
-                    'min',
-                    1
-                )
+                array('min', 1)
             )
         ),
 
@@ -163,12 +119,7 @@ final class Raidmanager extends App
         'setup_title' => array(
             'group' => 'setup',
             'default' => 'Autosetup',
-            'control' => array(
-                'text',
-                array(
-                    'size' => 50
-                )
-            ),
+            'control' => array('text', array('size' => 50)),
             'validate' => array(
                 'required',
                 'empty'
@@ -177,81 +128,36 @@ final class Raidmanager extends App
         'setup_notes' => array(
             'group' => 'setup',
             'default' => null,
-            'control' => array(
-                'textarea',
-                array(
-                    'rows' => 5,
-                    'cols' => 50
-                )
-            )
+            'control' => array('textarea', array('rows' => 5, 'cols' => 50))
         ),
         'setup_tank' => array(
             'group' => 'setup',
             'default' => 2,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 0,
-                    'max' => 100,
-                    'size' => 4
-                )
-            ),
+            'control' => array('number', array('min' => 0, 'max' => 100, 'size' => 4)),
             'validate' => array(
                 'blank',
                 'int',
-                array(
-                    'range',
-                    array(
-                        0,
-                        100
-                    )
-                )
+                array('range', array(0, 100))
             )
         ),
         'setup_damage' => array(
             'group' => 'setup',
             'default' => 6,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 0,
-                    'max' => 100,
-                    'size' => 4
-                )
-            ),
+            'control' => array('number', array('min' => 0, 'max' => 100, 'size' => 4)),
             'validate' => array(
                 'blank',
                 'int',
-                array(
-                    'range',
-                    array(
-                        0,
-                        100
-                    )
-                )
+                array('range', array(0, 100))
             )
         ),
         'setup_heal' => array(
             'group' => 'setup',
             'default' => 2,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 0,
-                    'max' => 100,
-                    'size' => 4
-                )
-            ),
+            'control' => array('number', array('min' => 0, 'max' => 100, 'size' => 4)),
             'validate' => array(
                 'blank',
                 'int',
-                array(
-                    'range',
-                    array(
-                        0,
-                        100
-                    )
-                )
+                array('range', array(0, 100))
             )
         ),
 
@@ -259,44 +165,20 @@ final class Raidmanager extends App
         'num_list_future_raids' => array(
             'group' => 'raidlist',
             'default' => 10,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 1,
-                    'max' => 30
-                )
-            ),
+            'control' => array('number', array('min' => 1, 'max' => 30)),
             'validate' => array(
                 'required',
-                array(
-                    'range',
-                    array(
-                        1,
-                        30
-                    )
-                )
+                array('range', array(1, 30))
             ),
             'open' => true
         ),
         'num_list_recent_raids' => array(
             'group' => 'raidlist',
             'default' => 10,
-            'control' => array(
-                'number',
-                array(
-                    'min' => 1,
-                    'max' => 30
-                )
-            ),
+            'control' => array('number', array('min' => 1, 'max' => 30)),
             'validate' => array(
                 'required',
-                array(
-                    'range',
-                    array(
-                        1,
-                        30
-                    )
-                )
+                array('range', array(1, 30))
             ),
             'open' => true
         ),
@@ -310,20 +192,11 @@ final class Raidmanager extends App
         'topic_board' => array(
             'group' => 'forum',
             'control' => 'select',
-            'data' => array(
-                'model',
-                'Forum::Board::getBoardlist'
-            )
+            'data' => array('model','Forum::Board::getBoardlist')
         ),
         'topic_intro' => array(
             'group' => 'forum',
-            'control' => array(
-                'textarea',
-                array(
-                    'cols' => 50,
-                    'rows' => 5
-                )
-            )
+            'control' => array('textarea', array('cols' => 50, 'rows' => 5))
         ),
         'use_calendar' => array(
             'group' => 'forum',
@@ -348,208 +221,247 @@ final class Raidmanager extends App
 
     // Used routes
     public $routes = array(
-        'raid_index' => array(
+        array(
+            'name' => 'raid_index',
             'route' => '/?',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_start' => array(
+        array(
+            'name' => 'raid_start',
             'route' => '/raid',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_selected' => array(
+        array(
+            'name' => 'raid_selected',
             'route' => '/raid/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'complete'
         ),
-        'raid_data' => array(
+        array(
+            'name' => 'raid_data',
             'route' => '/raid/index/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'index'
         ),
-        'raid_add' => array(
+        array(
+            'name' => 'raid_add',
             'method' => 'GET|POST',
             'route' => '/raid/add/[i:back_to]?',
             'ctrl' => 'raid',
             'action' => 'edit'
         ),
-        'raid_edit' => array(
+        array(
+            'name' => 'raid_edit',
             'method' => 'GET|POST',
             'route' => '/raid/edit/[i:id_raid]/[i:back_to]',
             'ctrl' => 'raid',
             'action' => 'edit'
         ),
-        'raid_infos' => array(
+        array(
+            'name' => 'raid_infos',
             'route' => '/raid/infos/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'infos'
         ),
-        'raid_autoadd' => array(
+        array(
+            'name' => 'raid_autoadd',
             'route' => '/raid/autoadd',
             'ctrl' => 'raid',
             'action' => 'autoadd'
         ),
-        'raid_delete' => array(
+        array(
+            'name' => 'raid_delete',
             'route' => '/raid/delete/[i:id_raid]',
             'ctrl' => 'raid',
             'action' => 'delete'
         ),
-        'subscription_index' => array(
+        array(
+            'name' => 'subscription_index',
             'route' => '/raid/subscription/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'index'
         ),
-        'subscription_edit' => array(
+        array(
+            'name' => 'subscription_edit',
             'route' => '/raid/subscription/edit/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'edit'
         ),
-        'subscription_enrollform' => array(
+        array(
+            'name' => 'subscription_enrollform',
             'method' => 'GET|POST',
             'route' => '/raid/subscription/enrollform/[i:id_raid]/[i:id_subscription]/[i:id_player]/[i:state]/[a:from]',
             'ctrl' => 'subscription',
             'action' => 'enrollform'
         ),
-        'subscription_save' => array(
+        array(
+            'name' => 'subscription_save',
             'method' => 'POST',
             'route' => '/raid/subscription/save/[a:from]/[i:id_raid]',
             'ctrl' => 'subscription',
             'action' => 'save'
         ),
-        'comment_index' => array(
+        array(
+            'name' => 'comment_index',
             'route' => '/raid/comment/index/[i:id_raid]',
             'ctrl' => 'comment',
             'action' => 'index'
         ),
-        'comment_delete' => array(
+        array(
+            'name' => 'comment_delete',
             'route' => '/raid/comment/delete/[i:id_raid]/[i:id_comment]',
             'ctrl' => 'comment',
             'action' => 'delete'
         ),
-        'setup_index' => array(
+        array(
+            'name' => 'setup_index',
             'route' => '/raid/setup/index/[i:id_setup]',
             'ctrl' => 'setup',
             'action' => 'index'
         ),
-        'setup_complete' => array(
+        array(
+            'name' => 'setup_complete',
             'route' => '/raid/setup/complete/[i:id_raid]',
             'ctrl' => 'setup',
             'action' => 'complete'
         ),
-        'setup_add' => array(
+        array(
+            'name' => 'setup_add',
             'method' => 'GET|POST',
             'route' => '/raid/setup/add/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'edit'
         ),
-        'setup_edit' => array(
+        array(
+            'name' => 'setup_edit',
             'method' => 'GET|POST',
             'route' => '/raid/setup/edit/[i:id_setup]/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'edit'
         ),
-        'setup_save' => array(
+        array(
+            'name' => 'setup_save',
             'method' => 'POST',
             'route' => '/raid/setup/save/[i:id_raid]/[i:back_to]',
             'ctrl' => 'setup',
             'action' => 'save'
         ),
-        'setup_delete' => array(
+        array(
+            'name' => 'setup_delete',
             'route' => '/raid/setup/delete/[i:id_setup]/[i:id_raid]',
             'ctrl' => 'setup',
             'action' => 'delete'
         ),
-        'setlist_edit' => array(
+        array(
+            'name' => 'setlist_edit',
             'route' => '/raid/setlist/edit/[i:id_raid]/[i:id_setup]',
             'ctrl' => 'setlist',
             'action' => 'edit'
         ),
-        'setlist_set' => array(
+        array(
+            'name' => 'setlist_set',
             'route' => '/raid/setlist/set/[i:id_setup]/[i:id_char]/[i:id_category]',
             'ctrl' => 'setlist',
             'action' => 'set_player'
         ),
-        'setlist_switch' => array(
+        array(
+            'name' => 'setlist_switch',
             'route' => '/raid/setlist/switch/[i:id_setlist]/[i:id_category]',
             'ctrl' => 'setlist',
             'action' => 'switch_player'
         ),
-        'setlist_unset' => array(
+        array(
+            'name' => 'setlist_unset',
             'route' => '/raid/setlist/unset/[i:id_setlist]',
             'ctrl' => 'setlist',
             'action' => 'unset_player'
         ),
-        'setlist_save' => array(
+        array(
+            'name' => 'setlist_save',
             'route' => '/raid/setlist/save/[i:id_setup]/[i:id_char]/[i:id_player]/[i:id_setlist]/[i:set_as]/[i:set_from]',
             'ctrl' => 'setlist',
             'action' => 'save'
         ),
-        'player_start' => array(
+        array(
+            'name' => 'player_start',
             'route' => '/player',
             'ctrl' => 'player',
             'action' => 'complete'
         ),
-        'player_index' => array(
+        array(
+            'name' => 'player_index',
             'route' => '/player/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'index'
         ),
-        'player_edit' => array(
+        array(
+            'name' => 'player_edit',
             'method' => 'GET|POST',
             'route' => '/player/edit/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'edit'
         ),
-        'player_delete' => array(
+        array(
+            'name' => 'player_delete',
             'route' => '/player/delete/[i:id_player]',
             'ctrl' => 'player',
             'action' => 'delete'
         ),
-        'player_add' => array(
+        array(
+            'name' => 'player_add',
             'method' => 'POST',
             'route' => '/player/add',
             'ctrl' => 'player',
             'action' => 'create'
         ),
-        'char_list' => array(
+        array(
+            'name' => 'char_list',
             'route' => '/charlist/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'charlist'
         ),
-        'char_add' => array(
+        array(
+            'name' => 'char_add',
             'method' => 'GET|POST',
             'route' => '/char/add/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'edit'
         ),
-        'char_edit' => array(
+        array(
+            'name' => 'char_edit',
             'method' => 'GET|POST',
             'route' => '/char/edit/[i:id_player]/[i:id_char]?',
             'ctrl' => 'char',
             'action' => 'edit'
         ),
-        'char_delete' => array(
+        array(
+            'name' => 'char_delete',
             'route' => '/char/delete/[i:id_char]/[i:id_player]',
             'ctrl' => 'char',
             'action' => 'delete'
         ),
-        'stats' => array(
+        array(
+            'name' => 'stats',
             'route' => '/stats',
             'ctrl' => 'stats',
             'action' => 'index'
         ),
-        'stats_subs' => array(
+        array(
+            'name' => 'stats_subs',
             'route' => '/stats/subs/[i:month]/[i:year]',
             'ctrl' => 'stats',
             'action' => 'subs'
         ),
-        'stats_player' => array(
+        array(
+            'name' => 'stats_player',
             'route' => '/stats/player/[i:month]/[i:year]',
             'ctrl' => 'stats',
             'action' => 'player'
         ),
-        'reset' => array(
+        array(
+            'name' => 'reset',
             'route' => '/reset',
             'ctrl' => 'raid',
             'action' => 'reset'
@@ -580,30 +492,46 @@ final class Raidmanager extends App
         return $html;
     }
 
-    /**
-     * To shown when nothing is to show
-     * @return string
-     */
-    public function onEmpty()
-    {
-        return '<div class="grid_12">' . $this->txt('no_content') . '</div>';
-    }
-
     /*
      * Creates the arrayelements of Raidmanager menu.
      */
     public function addMenuButtons(&$menu_buttons)
     {
+        // Without general access no menu will be created
+        if (!$this->generalAccess())
+            return $menu_buttons;
+
+        // User has general access so lets see what we have for him.
         $buttons = array();
 
-        $buttons['raidmanager_raid_head'] = array(
-            'title' => $this->txt('raids'),
-            'show' => true,
-            'href' => Url::factory('raidmanager_raid_start')->getUrl(),
-            'sub_buttons' => $this->getModel('Calendar')->getMenu()
-        );
+        // Try to load comming raids
+        $calendar = $this->getModel('Calendar')->getMenu();
 
-        // add rest of buttons
+        // Add raids button with raids when calendar is not false
+        if ($calendar)
+        {
+            $buttons['raidmanager_raid_head'] = array(
+                'title' => $this->txt('raids'),
+                'show' => true,
+                'href' => Url::factory('raidmanager_raid_start')->getUrl(),
+                'sub_buttons' => $calendar
+            );
+        }
+        else
+        {
+            // Otherwise check for raidadmin rights and active players to add autoraid button
+            if ($this->checkAccess('raidmanager_perm_raid') && $this->getModel('Player')->hasActivePlayer())
+            {
+            	$buttons['raidmanager_menu_raid_autoadd'] = array(
+            	    'title' => $this->txt('raid_autoraid'),
+            		'href' => Url::factory('raidmanager_raid_autoadd')->getUrl(),
+            		'show' => true,
+            		'sub_buttons' => array()
+            	);
+            }
+        }
+
+        // Add rest of buttons
         $buttons += array(
             'raidmanager_stats' => array(
                 'title' => $this->txt('stats_headline'),
@@ -614,17 +542,18 @@ final class Raidmanager extends App
             'raidmanager_playerlist' => array(
                 'title' => $this->txt('playerlist'),
                 'href' => Url::factory('raidmanager_player_start')->getUrl(),
-                'show' => allowedTo('raidmanager_perm_player'),
+                'show' => $this->checkAccess('raidmanager_perm_player'),
                 'sub_buttons' => array()
             ),
             'raidmanager_config' => array(
                 'title' => $this->txt('web_config'),
                 'href' => Url::factory('admin_app_config')->addParameter('app_name', 'raidmanager')->getUrl(),
-                'show' => allowedTo('raidmanager_perm_config'),
+                'show' => $this->checkAccess('raidmanager_perm_config'),
                 'sub_buttons' => array()
             )
         );
 
+        // The Raidmanager menubutton will only be shown to users if the have an active char
         $menu_buttons['raidmanager'] = array(
             'title' => 'Raidmanager',
             'href' => '#',
@@ -650,14 +579,13 @@ final class Raidmanager extends App
                 return true;
 
             // All other will be checked for existing playerprofile
-            $model = $this->getModel('Player');
-            $model->addField('players.state');
-            $model->setFilter('players.id_player={int:id_user}');
-            $model->addParameter('id_user', User::getId());
-            $model->read('val');
-
-            // Access only on player state 3 (active)
-            if ($model->data == 3)
+            if ($this->getModel('Player')->read(array(
+                                            	'type' => 'val',
+                                                'field' => 'players.state',
+                                                'filter' => 'players.id_player={int:id_user}',
+                                                'param' => array('id_user' => User::getId())
+                                                )
+            ) == 3)
                 return true;
         }
 

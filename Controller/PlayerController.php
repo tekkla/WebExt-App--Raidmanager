@@ -18,19 +18,13 @@ if (!defined('WEB'))
  * @subpackage Global
  * @license BSD
  * @copyright 2014 by author
+ * @final
  */
-class PlayerController extends Controller
+final class PlayerController extends Controller
 {
     // Accessmanagment on actions
-    public $access = array(
+    protected $access = array(
     	'*' => 'raidmanager_perm_player'
-    );
-
-    // Accessmanegment on actions
-    public $actions = array(
-        '*' => array(
-            'access' => 'raidmanager_perm_player'
-        )
     );
 
     /**
@@ -101,7 +95,7 @@ class PlayerController extends Controller
             if ($this->model->hasNoErrors())
             {
                 // Inform user about successful playercreation
-                $this->ajax->alert($this->txt('player_created'));
+                $this->message->success($this->txt('player_created'));
 
                 // Clear posted data
                 $this->request->clearPost();

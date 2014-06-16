@@ -15,7 +15,7 @@ class CommentView extends View
 				echo $this->actionbar;
 
 				// no comments to show
-				if($this->comments->count() == 0)
+				if(!$this->comments)
 				{
 					echo '<p>', $this->empty, '</p></div></div>';
 					return;

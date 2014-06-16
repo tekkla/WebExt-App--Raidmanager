@@ -1,0 +1,88 @@
+/* ------------------------------------------ */
+/* PLAYER
+/* ------------------------------------------ */
+
+/* ------------------------------------------ */
+/* calendar
+/* ------------------------------------------ */
+.app-raidmanager-calendar-selection {
+	margin-bottom: 15px;
+}
+
+.app-raidmanager-calendar-section {
+	background-color: #0D1617;
+	border-bottom: 1px solid #AAA;
+}
+
+
+/* ------------------------------------------ */
+/* RAID
+/* ------------------------------------------ */
+
+/* ------------------------------------------ */
+/* SETUP
+/* ------------------------------------------ */
+
+
+/* ------------------------------------------ */
+/* SETLISTS
+/* ------------------------------------------ */
+.app-raidmanager-setlist-tank,
+.app-raidmanager-setlist-damage,
+.app-raidmanager-setlist-heal,
+.app-raidmanager-waitlist-tank,
+.app-raidmanager-waitlist-damage,
+.app-raidmanager-waitlist-heal {
+	width: 33.3%;
+	float: left;
+}
+
+.app-raidmanager-setlist-damage {
+	width: 33.4%;
+}
+
+
+.app-raidmanager-setlist-player {
+	position: relative;
+	padding: 10px 0 10px 5px;
+	border-radius: 3px;
+	border: 1px solid #aaa;
+}
+
+/* ------------------------------------------ */
+/* Classes and their colors
+/* ------------------------------------------ */
+.app-raidmanager-class-druid 		{ color: #FF7D0A; }
+.app-raidmanager-class-deathknight 	{ color: #C41F3B; }
+.app-raidmanager-class-hunter 		{ color: #ABD473; }
+.app-raidmanager-class-mage 		{ color: #69CCF0; }
+.app-raidmanager-class-monk 		{ color: #00FF96; }
+.app-raidmanager-class-paladin 		{ color: #F58CBA; }
+.app-raidmanager-class-priest 		{ color: #bbb; }
+.app-raidmanager-class-shaman 		{ color: #0070DE; }
+.app-raidmanager-class-rogue 		{ color: #FFF569; }
+.app-raidmanager-class-warrior 		{ color: #C79C6E; }
+.app-raidmanager-class-warlock 		{ color: #9482C9; }
+
+/* --------------------------------------- */
+/* Comments
+/* --------------------------------------- */
+.app-raidmanager-commentlist .panel {
+	margin-bottom: 5px;
+}
+.app-raidmanager-commentlist .panel-body {
+	padding: 5px;
+}
+
+.app-raidmanager-commenttext {
+	padding-right: 20px;
+	display: block;
+}
+
+/* --------------------------------------- */
+/* STATS
+/* --------------------------------------- */
+
+/* --------------------------------------- */
+/* PLAYER
+/* --------------------------------------- */

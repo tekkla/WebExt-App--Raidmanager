@@ -1,12 +1,9 @@
 <?php
 namespace Web\Apps\Raidmanager\Controller;
 
-// used libs
 use Web\Framework\Lib\Error;
 use	Web\Framework\Lib\Controller;
 use	Web\Framework\Lib\Url;
-
-// used html components
 use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Html\Controls\UiButton;
 
@@ -16,25 +13,21 @@ use Web\Framework\Html\Controls\UiButton;
  * @copyright 2013
  *
  */
-class RaidController extends Controller
+final class RaidController extends Controller
 {
-	public $actions = array(
-		'Edit' => array(
-			'access' => 'raidmanager_perm_raid',
-			'tools' => 'Form',
-		),
-		'Save' => array(
-			'access' => 'raidmanager_perm_raid',
-		),
-		'Delete' => array(
-			'access' => 'raidmanager_perm_raid',
-		),
-		'Complete' => array(
-			'on' => 'checkForRaidId',
-		),
-		'WidgetNextRaid' => array(
-			'on' => 'checkForRaidId',
-		),
+	protected $access = array(
+		'Edit' => 'raidmanager_perm_raid',
+	    'Save' => 'raidmanager_perm_raid',
+	    'Delete' => 'raidmanager_perm_raid',
+	);
+
+	protected $events = array(
+	    'Complete' => array(
+	        'before' => 'checkForRaidId'
+	     ),
+	    'WidgetNextRaid' => array(
+	        'before' => 'checkForRaidId',
+	    ),
 	);
 
 	/**
@@ -85,7 +78,7 @@ class RaidController extends Controller
 						// No raiddays found, redirect user to raidmanager config and set a flash message
 						// to select the days to use for raids
 						$this->message->warning($this->txt('no_raid_days_selected'));
-						redirectexit(Url::factory('admin_app_config')->addParameter('app_name', 'raidmanager')->getUrl());
+						redirectexit(Url::factory('admin_app_config', array('app_name' => 'raidmanager'))->getUrl());
 					}
 
 					// At this point there is whether a raid id as parameter nor as id from the db.
@@ -149,7 +142,8 @@ class RaidController extends Controller
 			$actionbar->createButton('autoadd')
 							->setRoute('raidmanager_raid_autoadd', $params)
 							->setIcon('calendar')
-							->setTitle($this->txt('raid_autoraid'));
+							->setTitle($this->txt('raid_autoraid'))
+							->useFull();
 			$actionbar->createButton('delete')->setRoute('raidmanager_raid_delete', $params);
 
 			$this->setVar('actionbar', $actionbar);

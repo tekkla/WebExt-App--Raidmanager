@@ -19,12 +19,11 @@ if ( !defined('WEB'))
  * @license BSD
  * @copyright 2014 by author
  */
-class SubscriptionModel extends Model
+final class SubscriptionModel extends Model
 {
-	public $tbl = 'app_raidmanager_subscriptions';
-	public $alias = 'subs';
-	public $pk = 'id_subscription';
-
+	protected $tbl = 'app_raidmanager_subscriptions';
+	protected $alias = 'subs';
+	protected $pk = 'id_subscription';
 	public $validate = array(
 		'msg' => array(
 			'empty',
@@ -34,7 +33,6 @@ class SubscriptionModel extends Model
 
 	/**
 	 * Returns the enrollstate of the current player on a specified raid
-	 *
 	 * @param int $id_raid
 	 * <p>ID of the raid to check for enrollstate</p>
 	 */
@@ -78,133 +76,130 @@ class SubscriptionModel extends Model
 			if ($autosignon == 0)
 				$data->state = 0; # state for all on no ajax
 
-			$this->setData($data)->save();
+			$this->data = $data;
+			$this->save();
 		}
 	}
 
 	/**
-	 * Deletes all subscritions of a specific raid
-	 *
-	 * @param int $id
+	 * Deletes all subscriptions of a specific raid
+	 * @param int $id_raid
 	 */
 	public function deleteByRaid($id_raid)
 	{
-		$this->setFilter('id_raid={int:id_raid}');
-		$this->setParameter('id_raid', $id_raid);
-		$this->delete();
+		$this->delete(array(
+			'filter' => 'id_raid={int:id_raid}',
+		    'param' => array(
+		        'id_raid' => $id_raid
+		    )
+		));
 	}
 
 	/**
 	 * Deletes a specific subscription
-	 *
-	 * @param int $id
+	 * @param int $id_subscription
 	 */
-	public function deleteSubscriptionByID($id)
+	public function deleteSubscriptionByID($id_subscription)
 	{
-		$this->setFilter('id_subscription={int:pk}');
-		$this->setParameter('pk', $id);
-		$this->delete();
+		$this->delete($id_subscription);
 	}
 
 	/**
-	 * Deletes all subscrition for one specific player
-	 *
-	 * @param int $id
+	 * Deletes all subscritions for one specific player
+	 * @param int $id_player
 	 */
 	public function deleteSubscriptionByPlayer($id_player)
 	{
-		$this->setFilter('id_player={int:id_player}');
-		$this->setParameter('id_player', $id_player);
-		$this->delete();
+		$this->delete(array(
+			'filter' => 'id_player={int:id_player}',
+		    'params' => array(
+		        'id_player' => $id_player
+		    )
+		));
 	}
 
-
+	/**
+	 * Load subscriptions of a raid by a specific enrollstate.
+	 * @param int $id_raid
+	 * @param int $state
+	 * @return false|Data
+	 */
 	public function getBySubsstate($id_raid, $state)
 	{
-		$this->setField(array(
-			'subs.id_player',
-			'chars.char_name',
-			'cats.category',
-			'class.class',
-			'class.color'
+		return $this->read(array(
+		    'type' => '*',
+		    'field' => array(
+    			'subs.id_player',
+    			'chars.char_name',
+    			'cats.category',
+    			'class.class',
+    			'class.color'
+		    ),
+		    'join' => array(
+		        array('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player'),
+		        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class'),
+		    ),
+		    'filter' => 'subs.state={int:state} AND subs.id_raid={int:id_raid} AND chars.is_main=1',
+		    'param' => array(
+		        'id_raid' => $id_raid,
+		        'state' => $state
+		    ),
+		    'order' => 'chars.char_name'
 		));
-		$this->setJoin('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player');
-		$this->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-		$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-		$this->setFilter('subs.state={int:state} AND subs.id_raid={int:id_raid} AND chars.is_main=1');
-		$this->setOrder('chars.char_name');
-		$this->setParameter(array(
-			'id_raid' => $id_raid,
-			'state' => $state
-		));
-
-		return $this->read('*');
 	}
 
 	public function getEditSubscriptions($id_raid, $type)
 	{
-		// define the fields we want to read from model
-		$this->setField(array(
-			'subs.id_raid',
-			'subs.id_subscription',
-			'subs.id_player',
-			'subs.state',
-			'chars.char_name',
-			'cats.category',
-			'class.class',
-			'class.color'
-		));
-
-		// our following queries need the same joins. so we add it to model.
-		$this->setJoin('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player');
-		$this->addJoin('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category');
-		$this->addJoin('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class');
-
-		// set order on char names
-		$this->setOrder('chars.char_name');
-
-		#$filter = 'subs.id_raid={int:id_raid} AND chars.is_main=1 AND subs.id_player<>{int:id_player} AND subs.state ';
 		$filter = 'subs.id_raid={int:id_raid} AND chars.is_main=1 AND subs.state ';
 
 		switch($type)
 		{
+		    // Get player who are away or without any ajax
 			case 'resigned' :
-				// get player who are away or without any ajax
 				$filter .= 'IN(0,2)';
-				$btn_type = 'btn-success';
-				$icon = 'smile-o';
-				$title = 'raidmanager_comment_enroll';
-				$state = 1;
 				break;
 
+			// Get the lisst of enrolled player
 			case 'enrolled' :
-				// get the lisst of enrolled player
 				$filter .= '=1';
-				$btn_type = 'btn-danger';
-				$icon = 'frown-o';
-				$title = 'raidmanager_comment_resign';
-				$state = 2;
 				break;
 
 			default :
-				Throw new Error('Raidmanager: The given subscriptiontype is wrong. Set it to "enrolled" or "resigned"');
+				Throw new Error('The given subscriptiontype is wrong.', 1000, array('enrolled', 'resigned'));
 		}
 
-		$this->setFilter($filter);
-		$this->setParameter(array(
-			'id_raid' => $id_raid,
-			'id_player' => User::getId()
-		));
-
-		return $this->read('*', 'createSubsButton');
+		return $this->read(
+		    array(
+    			'type' => '*',
+    		    'field' => array(
+    		        'subs.id_raid',
+    		        'subs.id_subscription',
+    		        'subs.id_player',
+    		        'subs.state',
+    		        'chars.char_name',
+    		        'cats.category',
+    		        'class.class',
+    		        'class.color'
+    		    ),
+    		    'join' => array(
+    		        array('app_raidmanager_chars', 'chars', 'INNER', 'subs.id_player=chars.id_player'),
+    		        array('app_raidmanager_categories', 'cats', 'INNER', 'chars.id_category=cats.id_category'),
+    		        array('app_raidmanager_classes', 'class', 'INNER', 'chars.id_class=class.id_class'),
+    		    ),
+    		    'filter' => $filter,
+    		    'param' => array(
+    		        'id_raid' => $id_raid,
+    		        'id_player' => User::getId()
+    		    ),
+    		    'order' => 'chars.char_name'
+    		),
+		    'createSubsButton'
+		 );
 	}
 
-	public function createSubsButton($player)
+	protected function createSubsButton($player)
 	{
-		// editing user is not allowed to change his own state here.
-		#if ($player->id_player == User::getId())
-			#return false;
-
 		switch($player->state)
 		{
 			case 0:
@@ -225,7 +220,7 @@ class SubscriptionModel extends Model
 				break;
 
 			default :
-				Throw new Error('Raidmanager: The given subscriptiontype is wrong. Set it to "enrolled" or "resigned"');
+				Throw new Error('The given subscription set type is wrong.', 1000, array(0,1,2));
 		}
 
 		// build enrollbuttons
@@ -260,7 +255,7 @@ class SubscriptionModel extends Model
 	 */
 	public function saveEnrollform($data)
 	{
-		$this->setData($data);
+		$this->data = $data;
 
 		// normal users onl can changer their own subscription state. we need to prevent users from changing other
 		// users state. if user is different then the player of the subscription to change and the user lacks needed
@@ -366,37 +361,52 @@ class SubscriptionModel extends Model
 			$sub->state = $raid->autosignon==1 && $state==1 ? 1 : 0;
 
 			// add data container to model and save
-			$this->setData($sub)->save(false);
+			$this->data = $sub;
+			$this->save(false);
 		}
 	}
 
+	/**
+	 * Removes all future subscriptions of one specific player
+	 * @param int $id_player
+	 */
 	public function deletePlayerFromFutureRaidSub($id_player)
 	{
-		$this->setFilter('id_raid IN ({array_int:raids}) AND id_player={int:id_player}');
-		$this->setParameter(array(
-			'raids' => $this->getModel('Raid')->getFutureRaidIDs(),
-			'id_player' => $id_player
+		$this->delete(array(
+			'filter' => 'id_raid IN ({array_int:raids}) AND id_player={int:id_player}',
+		    'param' => array(
+		        'raids' => $this->getModel('Raid')->getFutureRaidIDs(),
+		        'id_player' => $id_player
+		    )
 		));
-		$this->delete();
 	}
 
+	/**
+	 * Sets the enrollstate on all future subscriptions for one specific player
+	 * @param int $id_player
+	 * @param int $state
+	 */
 	public function setPlayerStateOnFutureSubs($id_player, $state)
 	{
-		$this->setField('state');
-		$this->setFilter('subs.id_raid IN({array_int:raids}) AND subs.id_player={int:id_player}');
-		$this->setParameter(array(
-			'raids' => $this->getModel('Raid')->getFutureRaidIDs(),
-			'id_player' => $id_player,
-			'state' => $state
+		$this->update(array(
+		    'field' => 'state',
+		    'filter' => 'subs.id_raid IN({array_int:raids}) AND subs.id_player={int:id_player}',
+		    'param' => array(
+    			'raids' => $this->getModel('Raid')->getFutureRaidIDs(),
+    			'id_player' => $id_player,
+    			'state' => $state
+		    )
 		));
-		$this->update();
 	}
 
+	/**
+	 * Counts and returns the number of enrolled players on a raid
+	 * @param int $id_raid
+	 * @return int
+	 */
 	public function countEnrolledPlayers($id_raid)
 	{
-		$this->setField('Count(id_player)');
-		$this->setFilter('id_raid={int:id_raid} AND state=1', array('id_raid' => $id_raid));
-		return $this->read('num');
+	    return $this->count('id_raid={int:id_raid} AND state=1', array('id_raid' => $id_raid));
 	}
 }
 ?>

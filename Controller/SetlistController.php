@@ -2,28 +2,21 @@
 namespace Web\Apps\Raidmanager\Controller;
 
 use Web\Framework\Lib\Controller;
-
 use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Lib\Data;
 
-class SetlistController extends Controller
+final class SetlistController extends Controller
 {
-	public $actions = array(
-		'Edit' => array(
-			'access' => 'raidmanager_perm_setlist',
-		),
-		'Save' => array(
-			'access' => 'raidmanager_perm_setlist',
-		),
-	);
+    protected $access = array(
+    	'Edit' => 'raidmanager_perm_setlist',
+        'Save' => 'raidmanager_perm_setlist',
+    );
 
 	public function Complete($id_setup)
 	{
 		$this->Index($id_setup);
 		$this->Availlist($id_setup);
-
 		$this->ajax->setTarget('#raidmanager_setup_' . $id_setup . '_player');
-
 	}
 
 	public function Index($id_setup)
@@ -46,7 +39,6 @@ class SetlistController extends Controller
 		$this->setVar(array(
 			'availlist' =>  $this->model->getAvail($id_setup),
 			'count' => $this->model->countData(),
-			'model' => $this->model
 		));
 	}
 

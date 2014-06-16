@@ -8,14 +8,21 @@ use Web\Framework\Lib\Smf;
 use Web\Framework\Lib\App;
 use Web\Framework\Lib\Data;
 
-class RaidModel extends Model
+/**
+ * Player model
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
+ */
+final class RaidModel extends Model
 {
-	public $tbl = 'app_raidmanager_raids';
-	public $alias = 'raids';
-	public $pk = 'id_raid';
-
+	protected $tbl = 'app_raidmanager_raids';
+	protected $alias = 'raids';
+	protected $pk = 'id_raid';
 	public $validate = array(
-		'destination' => 'empty',
+		'destination' => array('empty'),
 		'starttime' => array('empty', 'date'),
 		'endtime' => array('empty', 'date'),
 	);
@@ -118,27 +125,31 @@ class RaidModel extends Model
 		if ($is_new)
 		{
 			// add subs to this raid
-			$this->app->getModel('Subscription')->createSubscriptionForRaid($this->data->id_raid, $this->data->autosignon);
+			$this->getModel('Subscription')->createSubscriptionForRaid($this->data->id_raid, $this->data->autosignon);
 
 			// create one blank setup
-			$this->app->getModel('Setup')->createDefaultSetup($this->data->id_raid);
+			$this->getModel('Setup')->createDefaultSetup($this->data->id_raid);
 
 			// new raids will be loaded completly
 			$this->data->action = 'Index';
-
 		}
 		else
 		{
 			$this->data->action = 'Infos';
 
 			// extend the already existing raiddata with topic and calendar infos
-			$this->setField(array(
-				'raids.id_topic',
-				'raids.id_message',
-				'raids.id_event',
+			$this->read(array(
+			    'type' => 'ext',
+			    'field' => array(
+			        'raids.id_topic',
+			        'raids.id_message',
+			        'raids.id_event',
+			    ),
+			    'filter' => 'raids.id_raid={int:id_raid}',
+			    'param' => array(
+			        'id_raid' => $this->data->id_raid
+			    ),
 			));
-			$this->setFilter('raids.id_raid={int:id_raid}', array('id_raid' => $this->data->id_raid));
-			$this->read('ext');
 		}
 
 		$this->manageTopic();
@@ -153,7 +164,7 @@ class RaidModel extends Model
 		$model_names = array('Setup', 'Comment', 'Subscription', 'Setlist');
 
 		foreach ($model_names as $model)
-			$this->app->getModel($model)->deleteByRaid($id_raid);
+			$this->getModel($model)->deleteByRaid($id_raid);
 
 		// set a delete flag for topic management
 		$this->manageTopic(true);
@@ -172,12 +183,15 @@ class RaidModel extends Model
 	 */
 	public function getOldRaidIDs()
 	{
-		$this->setFilter('starttime<{int:starttime} AND deleted=0');
-		$this->setParameter('starttime', time());
-		$this->setOrder('starttime');
-		$this->setLowerLimit($this->cfg('num_list_old_raids'));
-
-		return $this->read('*');
+		return $this->read(array(
+		    'type' => '*',
+		    'filter' => 'starttime<{int:starttime} AND deleted=0',
+		    'param' => array(
+		        'starttime' => time()
+		    ),
+		    'order' => 'starttime',
+		    'limit' => $this->cfg('num_list_old_raids')
+		));
 	}
 
 	/**
@@ -219,34 +233,41 @@ class RaidModel extends Model
 	 */
 	public function autoAddRaids()
 	{
-
-		// are we still here? yes? then get the raiddays from settings
+		// Get the raiddays from settings
 		$raiddays = $this->cfg('raid_days');
 
+		// No raiddays no raid creation
 		if (!$raiddays)
 			return false;
 
+		// Cet the number of future raids
+		$num_future_raids = $this->read(array(
+		    'type' => 'val',
+		    'field' => 'COUNT(id_raid)',
+		    'filter' => 'starttime > {int:starttime} AND deleted=0',
+		    'param' => array('starttime' => time())
+		));
 
-		// get the number of already existing raids in the future
-		$this->setField('COUNT(id_raid)');
-		$this->setFilter('starttime > {int:starttime} AND deleted=0');
-		$this->setParameter('starttime', time());
-		$num_future_raids = $this->read('val');
-
-		// calculate the number of raids we have to add
+		// Calculate the number of raids we have to add
 		$num_raids_to_add = $this->cfg('raid_new_days_ahead') - $num_future_raids;
 
-		// no raids to add => exit;
+		// No raids to add?
 		if($num_raids_to_add == 0)
 			return;
 
-		// we have raids to add so we need the start timestamp from the last future raid
+		// We have raids to add so we need the start timestamp from the last future raid
 		$this->setField('starttime');
 		$this->setFilter('deleted=0');
 		$this->setOrder('starttime DESC');
 		$this->setLowerLimit(1);
 
-		$last_raid_starttime = $this->read('val');
+		$last_raid_starttime = $this->read(array(
+		    'type' => 'val',
+		    'field' => 'starttime',
+		    'filter' => 'deleted=0',
+		    'order' => 'starttime DESC',
+		    'limit' => 1
+		));
 
 		// reset the modelfilter
 		$this->resetFilter();
@@ -335,23 +356,27 @@ class RaidModel extends Model
 
 	public function getFutureRaidIDsAndAutosignon()
 	{
-		$this->setField(array(
-			'id_raid',
-			'autosignon'
+		return $this->read(array(
+		    'type' => '*',
+		    'field' => array(
+		        'id_raid',
+		        'autosignon'
+		    ),
+		    'filter' => 'starttime>{int:starttime}',
+		    'param' => array(
+		        'starttime' => time()
+		    )
 		));
-		$this->setFilter('starttime>{int:starttime}');
-		$this->setParameter('starttime', time());
-
-		return $this->read('*');
 	}
 
 	public function getFutureRaidIDs()
 	{
-		return $this
-				->setField('id_raid')
-				->setFilter('starttime>{int:starttime}')
-				->setParameter('starttime', time())
-				->read('keysonly');
+		return $this->read(array(
+	    	'type' => 'key',
+	        'field' => 'id_raid',
+	        'filter' => 'starttime>{int:starttime}',
+	        'param' => array('starttime' => time())
+	    ));
 	}
 
 	public function clearAllRaids()
@@ -361,7 +386,7 @@ class RaidModel extends Model
 		$model_names = array('Subscription', 'Setlist', 'Comment', 'Setup');
 
 		foreach($model_names as $model)
-			$this->app->getModel($model)->truncate();
+			$this->getModel($model)->truncate();
 	}
 
 	private function manageTopic($delete=false)
