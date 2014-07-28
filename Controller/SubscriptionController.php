@@ -244,29 +244,5 @@ class SubscriptionController extends Controller
 
 		$this->ajax->setTarget('#raidmanager_subscriptions');
 	}
-
-	/*
-	public function Resigned($id_raid)
-	{
-		$this->setVar('resign', $this->model->getResigned( $id_raid ));
-	}
-
-	public function Available($id_raid)
-	{
-		$this->setVar('available', $this->model->getAvailable( $id_raid ));
-
-		// respond to regignlist
-		$this->setAjax();
-	}
-
-	public function noResponse($id_raid)
-	{
-		$this->setVar('noresponse', $this->model->getNoResponse( $id_raid ));
-
-		// respond to regignlist
-		$this->setAjax();
-	}*/
-
 }
-
 ?>
