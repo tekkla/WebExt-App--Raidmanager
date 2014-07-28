@@ -205,7 +205,8 @@ class SubscriptionController extends Controller
 					'id_subscription' => $this->model->data->id_subscription,
 					'state' => $this->model->data->state,
 					'from' => $from,
-					'id_player' => $this->model->data->id_player
+					'id_player' => $this->model->data->id_player,
+					'id_raid' => $id_raid
 				)
 			);
 			return;
