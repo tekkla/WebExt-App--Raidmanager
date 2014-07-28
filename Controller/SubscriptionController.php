@@ -153,9 +153,6 @@ class SubscriptionController extends Controller
 		// BUILD ICONS
 		// ------------------------------
 
-		// button array
-		$actionbar = new Actionbar();
-
 		switch ($from)
 		{
 			case 'comment':
@@ -169,10 +166,13 @@ class SubscriptionController extends Controller
 				break;
 		}
 
-		// if cancel parameter set in request and is 'back' we want to go back to the calling dialog when we cklick the cancel button
+		// New actionbar
+		$actionbar = new Actionbar();
+
+		// If cancel parameter set in request and is 'back' we want to go back to the calling dialog when we cklick the cancel button
 		$actionbar->createButton('cancel')->setRoute($route, array('id_raid' => $id_raid))->setTarget($target);
 
-		// save button
+		// Save button
 		$params = array(
 			'id_raid' => $id_raid,
 			'from' => $from
