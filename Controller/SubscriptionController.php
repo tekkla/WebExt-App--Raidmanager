@@ -1,248 +1,239 @@
 <?php
-namespace Web\Apps\Raidmanager\Controller;
 
-use web\framework\Web;
+namespace Web\Apps\Raidmanager\Controller;
 
 use Web\Framework\Lib\Controller;
 use Web\Framework\Lib\Error;
 use Web\Framework\Lib\User;
-
 use Web\Framework\Html\Controls\Actionbar;
 
-
-class SubscriptionController extends Controller
+final class SubscriptionController extends Controller
 {
-	public $actions = array(
-		'Edit' => array(
-			'access' => 'raidmanager_perm_subs',
-		),
-		'Enrollform' => array(
-			'tools' => 'Form'
-		),
-	);
+    public $access = array(
+        'Edit' => 'raidmanager_perm_subs'
+    );
 
-	public function Index($id_raid)
-	{
-		// ---------------------------
-		// Essential parameters
-		// ---------------------------
-		$id_player = User::getId();
+    public function Index($id_raid)
+    {
+        // Create subscription lists and headlines
+        $types = array(
+            0 => 'noresponse',
+            1 => 'enrolled',
+            2 => 'resigned'
+        );
 
-		// ---------------------------
-		// Headline and text
-		// ---------------------------
-		$this->setVar(array(
-			'headline' => $this->txt('subscription_headline'),
-			'nodata' => $this->txt('raid_resignlist_nodata'),
-		));
+        $this->setVar('types', $types);
 
-		// ---------------------------
-		// Actionbar
-		// ---------------------------
-		if ($this->checkUserrights('raidmanager_perm_subs')===true)
-		{
-			$actionbar = new Actionbar();
+        $counter = 0;
 
-			// build delete button
-			$actionbar->createButton('user')->setIcon('user')->setTitle($this->txt('raid_signon_change'))->setRoute('raidmanager_subscription_edit', array('id_raid' => $id_raid));
+        foreach ( $types as $type => $txt )
+        {
+            // player with no ajax
+            $this->model->getBySubsstate($id_raid, $type);
 
-			// Publish actionbar
-			$this->setVar('actionbar', $actionbar);
-		}
+            if ($this->model->countData() > 0)
+            {
+                $this->setVar(array(
+                    'headline_' . $txt => $this->txt('subscription_' . $txt . '_headline') . ' (' . $this->model->countData() . ')',
+                    $txt => $this->model->data
+                ));
 
-		// -----------------------------
-		// Create subscription lists
-		// and headlines
-		// -----------------------------
-		$types = array(
-			0 => 'noresponse',
-			1 => 'enrolled',
-			2 => 'resigned',
-		);
+                $counter++;
+            }
+        }
 
-		$this->setVar('types', $types);
+        // Headline and text
+        $this->setVar(array(
+            'headline' => $this->txt('subscription_headline'),
+            'txt_nodata' => $this->txt('subscription_noplayer'),
+            'nodata' => $counter == 0 ? true : false,
+        ));
 
-		foreach ($types as $type => $txt)
-		{
-			// player with no ajax
-			$this->model->getBySubsstate($id_raid, $type);
+        // Actionbar
+        if ($this->checkUserrights('raidmanager_perm_subs') === true)
+        {
+            $actionbar = new Actionbar();
 
-			if ($this->model->countData() > 0)
-			{
-				$this->setVar(array(
-					'headline_' . $txt => $this->txt('subscription_' . $txt .'_headline') . ' (' . $this->model->countData() . ')',
-					$txt => $this->model->data
-				));
-			}
-		}
+            // Build delete button
+            $actionbar->createButton('user')->setIcon('user')->setTitle($this->txt('raid_signon_change'))->setRoute('raidmanager_subscription_edit', array(
+                'id_raid' => $id_raid
+            ));
 
-		$this->ajax->setTarget('#raidmanager_subscriptions');
-	}
+            // Publish actionbar
+            $this->setVar('actionbar', $actionbar);
+        }
 
+        // Target of ajax result
+        $this->setAjaxTarget('#raidmanager_subscriptions');
+    }
 
-	/**
-	 * The enrollform can be called by several actions.
-	 * You can use it as a simple commentform or as a form for
-	 * player enrolls and player resigns.
-	 */
-	function Enrollform($id_subscription, $state, $from, $id_player=null)
-	{
-		// get the player id - if not set as request param, assume it is the current user
-		$id_player = isset($id_player) ? $id_player : User::getId();
+    /**
+     * The enrollform can be called by several actions.
+     * You can use it as a simple commentform or as a form for
+     * player enrolls and player resigns.
+     */
+    function Enrollform($id_subscription, $state, $from, $id_player = null)
+    {
+        // get the player id - if not set as request param, assume it is the current user
+        $id_player = isset($id_player) ? $id_player : User::getId();
 
-		// get the raid id of this subscription if no data is present
-		$id_raid = $this->model->hasData() ? $this->model->data->id_raid : $this->model->getRaidId($id_subscription);
+        // get the raid id of this subscription if no data is present
+        $id_raid = $this->model->hasData() ? $this->model->data->id_raid : $this->model->getRaidId($id_subscription);
 
-		// get the mainchar name of player
-		$char_name = $this->app->getModel('Char')->getMaincharName($id_player);
+        // get the mainchar name of player
+        $char_name = $this->getModel('Char')->getMaincharName($id_player);
 
-		// select headline and bg color class
-		switch($state)
-		{
-			case 0 :
-				$headline = $this->txt('comment_comment');
-				break;
+        // select headline and bg color class
+        switch ($state)
+        {
+            case 0 :
+                $headline = $this->txt('comment_comment');
+                break;
 
-			case 1 :
-				$headline = $char_name . ' ' . $this->txt('comment_enroll');
-				$bg_class = 'text-success';
-				break;
+            case 1 :
+                $headline = $char_name . ' ' . $this->txt('comment_enroll');
+                $bg_class = 'text-success';
+                break;
 
-			case 2 :
-				$headline = $char_name . ' ' . $this->txt('comment_resign');
-				$bg_class = 'text-danger';
-				break;
-		}
+            case 2 :
+                $headline = $char_name . ' ' . $this->txt('comment_resign');
+                $bg_class = 'text-danger';
+                break;
+        }
 
-		$this->setVar(array(
-			'headline' => $headline,
-			'placeholder' => $this->txt('comment_placeholder'),
-		));
+        $this->setVar(array(
+            'headline' => $headline,
+            'placeholder' => $this->txt('comment_placeholder')
+        ));
 
-		if (isset($bg_class))
-			$this->setVar('color', ' class="' . $bg_class . '"');
+        if (isset($bg_class))
+            $this->setVar('color', ' class="' . $bg_class . '"');
 
-		// Get FormDesigner object
-		$form = $this->getFormDesigner();
+            // Get FormDesigner object
+        $form = $this->getFormDesigner();
 
-		// SOME FORMDATA
-		$form->setActionRoute('raidmanager_subscription_save', array('from'=>$from, 'id_raid'=>$id_raid));
+        // SOME FORMDATA
+        $form->setActionRoute('raidmanager_subscription_save', array(
+            'from' => $from,
+            'id_raid' => $id_raid
+        ));
 
-		// No buttons please
-		$form->noButtons();
+        // No buttons please
+        $form->noButtons();
 
-		// Hidden subscription id
-		$form->createElement('hidden', 'id_subscription')->setValue($id_subscription);
+        // Hidden subscription id
+        $form->createElement('hidden', 'id_subscription')->setValue($id_subscription);
 
-		// Hidden raid id
-		$form->createElement('hidden', 'id_raid')->setValue($id_raid);
+        // Hidden raid id
+        $form->createElement('hidden', 'id_raid')->setValue($id_raid);
 
-		// Hidden player id
-		$form->createElement('hidden', 'id_player')->setValue($id_player);
+        // Hidden player id
+        $form->createElement('hidden', 'id_player')->setValue($id_player);
 
-		// Hidden state
-		$form->createElement('hidden', 'state')->setValue($state);
+        // Hidden state
+        $form->createElement('hidden', 'state')->setValue($state);
 
-		// Visible textarea for comment
-		$form->createElement('textarea', 'msg')->setRows(2)->setPlaceholder($this->txt('comment_placeholder'))->noLabel();
+        // Visible textarea for comment
+        $form->createElement('textarea', 'msg')->setRows(2)->setPlaceholder($this->txt('comment_placeholder'))->noLabel();
 
-		// publish form data to view
-		$this->setVar('enrollform' , $form);
+        $form->setName($from);
 
-		// ------------------------------
-		// BUILD ICONS
-		// ------------------------------
+        // publish form data to view
+        $this->setVar('enrollform', $form);
 
-		switch ($from)
-		{
-			case 'comment':
-				$route =  'raidmanager_comment_index';
-				$target = 'raidmanager_comments';
-				break;
+        // ------------------------------
+        // BUILD ICONS
+        // ------------------------------
 
-			case 'subscription':
-				$route = 'raidmanager_subscription_edit';
-				$target = 'raidmanager_subscriptions';
-				break;
-		}
+        switch ($from)
+        {
+            case 'comment' :
+                $route = 'raidmanager_comment_index';
+                $target = 'raidmanager_comments';
+                break;
 
-		// New actionbar
-		$actionbar = new Actionbar();
+            case 'subscription' :
+                $route = 'raidmanager_subscription_edit';
+                $target = 'raidmanager_subscriptions';
+                break;
+        }
 
-		// If cancel parameter set in request and is 'back' we want to go back to the calling dialog when we cklick the cancel button
-		$actionbar->createButton('cancel')->setRoute($route, array('id_raid' => $id_raid))->setTarget($target);
+        // New actionbar
+        $actionbar = new Actionbar();
 
-		// Save button
-		$params = array(
-			'id_raid' => $id_raid,
-			'from' => $from
-		);
+        // If cancel parameter set in request and is 'back' we want to go back to the calling dialog when we cklick the cancel button
+        $actionbar->createButton('cancel')->setRoute($route, array(
+            'id_raid' => $id_raid
+        ))->setTarget($target);
 
-		$actionbar->createButton('save')->setForm( $form->getId() )->setRoute('raidmanager_subscription_save', $params);
+        // Save button
+        $param = array(
+            'id_raid' => $id_raid,
+            'from' => $from
+        );
 
-		// publish icons to view
-		$this->setVar('actionbar', $actionbar);
+        $actionbar->createButton('save')->setForm($form->getId())->setRoute('raidmanager_subscription_save', $param);
 
-		// where to place on ajax requests
-		$this->ajax->setTarget('#' .$target);
-	}
+        // publish icons to view
+        $this->setVar('actionbar', $actionbar);
 
-	public function Save($from, $id_raid)
-	{
-		$post = $this->request->getPost();
+        // where to place on ajax requests
+        $this->setAjaxTarget('#' . $target);
+    }
 
-		if (!$post)
-			Throw new Error('Data of raidmanager subscription could not be retreived.');
+    public function Save($from, $id_raid)
+    {
+        $post = $this->request->getPost();
 
-		// save data
-		$this->model->saveEnrollform($post);
+        if (!$post)
+            Throw new Error('Data of raidmanager subscription could not be retreived.');
 
-		if ($this->model->hasErrors())
-		{
-			$this->run(
-				'Enrollform',
-				array(
-					'id_subscription' => $this->model->data->id_subscription,
-					'state' => $this->model->data->state,
-					'from' => $from,
-					'id_player' => $this->model->data->id_player,
-					'id_raid' => $id_raid
-				)
-			);
-			return;
-		}
+            // Save data
+        $this->model->saveEnrollform($post);
 
-		$params = array('id_raid' => $id_raid);
+        if ($this->model->hasErrors())
+        {
+            $this->run('Enrollform', array(
+                'id_subscription' => $this->model->data->id_subscription,
+                'state' => $this->model->data->state,
+                'from' => $from,
+                'id_player' => $this->model->data->id_player,
+                'id_raid' => $id_raid
+            ));
+            return;
+        }
 
-		// back to subscription?
-		if ($from == 'subscription')
-			$this->ajax->call('raidmanager', 'subscription', 'edit', '#raidmanager_subscriptions', $params);
-		else
-			$this->ajax->call('raidmanager', 'subscription', 'index', '#raidmanager_subscriptions', $params);
+        $param = array(
+            'id_raid' => $id_raid
+        );
 
-		// refresh commentlist
-		$this->ajax->call('raidmanager','comment', 'index', '#raidmanager_comments', $params);
+        // back to subscription or Index?
+        $this->getController('Subscription')->ajax($from == 'subscription' ? 'Edit' : 'Index', $param, '#raidmanager_subscriptions');
 
-		// refresh setups only if the player subscribes or unsubscribes
-		if ($this->model->data->state != 0)
-			$this->ajax->call('raidmanager','setup', 'complete', '#raidmanager_setups', $params);
-	}
+        // refresh commentlist
+        $this->getController('Comment')->ajax('Index', $param, '#raidmanager_comments');
 
+        // refresh setups only if the player subscribes or unsubscribes
+        if ($this->model->data->state != 0)
+            $this->getController('Setup')->ajax('Complete', $param, '#raidmanager_setups');
+    }
 
-	public function Edit($id_raid)
-	{
-		// cancel button
-		$actionbar = new Actionbar();
-		$actionbar->createButton('cancel')->setRoute('raidmanager_subscription_index', array('id_raid' => $id_raid));
+    public function Edit($id_raid)
+    {
+        // cancel button
+        $actionbar = new Actionbar();
+        $actionbar->createButton('cancel')->setRoute('raidmanager_subscription_index', array(
+            'id_raid' => $id_raid
+        ));
 
-		$this->setVar(array(
-			'actionbar' => $actionbar,
-			'headline' => $this->txt('subslist_headline'),
-			'resigned' => $this->model->getEditSubscriptions( $id_raid, 'resigned' ),
-			'enrolled' => $this->model->getEditSubscriptions( $id_raid, 'enrolled' ),
-		));
+        $this->setVar(array(
+            'actionbar' => $actionbar,
+            'headline' => $this->txt('subslist_headline'),
+            'resigned' => $this->model->getEditSubscriptions($id_raid, 'resigned'),
+            'enrolled' => $this->model->getEditSubscriptions($id_raid, 'enrolled')
+        ));
 
-		$this->ajax->setTarget('#raidmanager_subscriptions');
-	}
+        $this->setAjaxTarget('#raidmanager_subscriptions');
+    }
 }
 ?>

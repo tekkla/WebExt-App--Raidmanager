@@ -43,8 +43,11 @@ class PlayerView extends View
 		}
 
 		// show the players!
-		foreach($this->{$type . '_data'} as $player)
-			echo '<li class="list-group-item" id="raidmanager_player_', $player->id_player ,'">', $this->Index($player), '</li>';
+		if ($this->{$type . '_data'})
+		{
+		    foreach($this->{$type . '_data'} as $player)
+		        echo '<li class="list-group-item" id="raidmanager_player_', $player->id_player ,'">', $this->Index($player), '</li>';
+		}
 
 		echo '
 		</ul>';

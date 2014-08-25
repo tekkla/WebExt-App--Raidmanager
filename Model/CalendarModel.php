@@ -26,6 +26,12 @@ final class CalendarModel extends Model
     protected $alias = 'raids';
     protected $pk = 'id_raid';
 
+    /**
+     * Loads the future and recent raids for calendar in raidmanager. Provided $id_raid parameter is used to flag
+     * the currently visible raid as active.
+     * @param int $id_raid
+     * @return \Web\Framework\Lib\Data
+     */
     public function getCalendar($id_raid)
     {
         $query = array(
@@ -48,13 +54,13 @@ final class CalendarModel extends Model
         $out = new Data();
 
         // get future raids
-        $query['filter'] = '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND raids.deleted=0 AND subs.id_player={int:id_player}';
+        $query['filter'] = '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND subs.id_player={int:id_player}';
         $query['order'] = 'raids.starttime';
         $query['limit'] = $this->cfg('num_list_future_raids');
         $out->future = $this->buildRaidlistLinks($this->read($query), $id_raid);
 
         // get recent raids
-        $query['filter'] = 'raids.endtime<{int:starttime} AND raids.deleted=0 AND subs.id_player={int:id_player}';
+        $query['filter'] = 'raids.endtime<{int:starttime} AND subs.id_player={int:id_player}';
         $query['order'] = 'raids.starttime DESC';
         $query['limit'] = $this->cfg('num_list_recent_raids');
         $out->recent = $this->buildRaidlistLinks($this->read($query), $id_raid);
@@ -62,6 +68,10 @@ final class CalendarModel extends Model
         return $out;
     }
 
+    /**
+     * Loads infos about the next upcoming raid.
+     * @return boolean|\Web\Framework\Lib\Data
+     */
     public function nextRaid()
     {
         $this->read(array(
@@ -74,7 +84,7 @@ final class CalendarModel extends Model
             'join' => array(
         		array('app_raidmanager_subscriptions', 'subs', 'INNER', 'raids.id_raid=subs.id_raid')
         	),
-            'filter' => '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND raids.deleted=0 AND subs.id_player={int:id_player}',
+            'filter' => '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND subs.id_player={int:id_player}',
             'param' => array(
                 'starttime' => time(),
                 'id_player' => User::getId()
@@ -95,6 +105,10 @@ final class CalendarModel extends Model
         return $this->data;
     }
 
+    /**
+     * Loads raidcalendar of coming raids to use as menulinks. Returns boolean false when no raids were found.
+     * @return boolean|array
+     */
     public function getMenu()
     {
         $this->read(array(
@@ -108,7 +122,7 @@ final class CalendarModel extends Model
             'join' => array(
                 array('app_raidmanager_subscriptions', 'subs', 'INNER', 'raids.id_raid=subs.id_raid')
             ),
-            'filter' => '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND raids.deleted=0 AND subs.id_player={int:id_player}',
+            'filter' => '(raids.starttime>{int:starttime} OR {int:starttime} BETWEEN raids.starttime AND raids.endtime) AND subs.id_player={int:id_player}',
             'param' => array(
                 'starttime' => time(),
                 'id_player' => User::getId()
@@ -137,6 +151,12 @@ final class CalendarModel extends Model
         return $menu_buttons;
     }
 
+    /**
+     * Internal method to create links out of provided raidlist
+     * @param array $raidlist
+     * @param int $id_raid
+     * @return array
+     */
     private function buildRaidlistLinks($raidlist, $id_raid = null)
     {
         $buttons = array();
@@ -192,6 +212,10 @@ final class CalendarModel extends Model
         return $buttons;
     }
 
+    /**
+     * Returns an array of user lang file specific days
+     * @return array
+     */
     public function getDays()
     {
         $days = Txt::get('days', 'SMF');

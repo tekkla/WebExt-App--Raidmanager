@@ -98,7 +98,7 @@ $txt['app_raidmanager_subscription_headline'] = 'Anmeldesituation';
 $txt['app_raidmanager_subscription_resigned_headline'] = 'abgemeldet';
 $txt['app_raidmanager_subscription_noresponse_headline'] = 'unbekannt';
 $txt['app_raidmanager_subscription_enrolled_headline'] = 'angemeldet';
-$txt['app_raidmanager_subscription_noplayer'] = 'niemand';
+$txt['app_raidmanager_subscription_noplayer'] = 'Niemand vorhanden';
 
 $txt['app_raidmanager_raid_availlist_headline'] = 'Verf&uuml;gbare Spieler';
 $txt['app_raidmanager_raid_availlist_nodata'] = 'keine Spieler angemeldet';
@@ -120,11 +120,6 @@ $txt['app_raidmanager_autoraid_headline'] = 'Autoraid wurde durchgef&uuml;hrt';
 $txt['app_raidmanager_autoraid_raid_destination'] = 'Raid';
 $txt['app_raidmanager_autoraid_setup_title'] = 'Autosetup #1';
 $txt['app_raidmanager_autoraid_setup_description'] = 'automatisch angelegt durch Autoraid';
-
-// -------------------------------------------------------
-// SUBSCRIPTION
-// -------------------------------------------------------
-$txt['app_raidmanager_subslist_headline'] = 'Raidanmeldungen';
 
 // -------------------------------------------------------
 // COMMENT

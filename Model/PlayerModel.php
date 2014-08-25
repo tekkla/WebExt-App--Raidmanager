@@ -4,6 +4,9 @@ namespace Web\Apps\Raidmanager\Model;
 use Web\Framework\Lib\Model;
 use Web\Framework\Html\Controls\Actionbar;
 
+if (!defined('WEB'))
+    die('Cannot run without WebExt framework...');
+
 /**
  * Player model
  * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
@@ -32,6 +35,12 @@ final class PlayerModel extends Model
         )
     );
 
+    /**
+     * Returns the data of a specific player.
+     * @param int $id_player Id of player
+     * @param boolean $use_actionbar Flag to add actionbar
+     * @return Data|boolean
+     */
     public function getPlayer($id_player, $use_actionbar = true)
     {
         // Query definition
@@ -83,6 +92,11 @@ final class PlayerModel extends Model
         return $this->read($query, $callbacks);
     }
 
+    /**
+     * Loads and returns all player with a specific playersate
+     * @param int $state
+     * @return boolean|array
+     */
     public function getPlayerByState($state)
     {
         $this->setFilter('state={int:state}');
@@ -90,6 +104,12 @@ final class PlayerModel extends Model
         return $this->read('*');
     }
 
+    /**
+     * Loads and returns a playlist for a specific player type. When no players of this type found, the method will
+     * return boolean false.
+     * @param string $type
+     * @return boolean|array
+     */
     public function getPlayerlist($type)
     {
         $types = array(
@@ -128,12 +148,12 @@ final class PlayerModel extends Model
     }
 
     /**
-     * Used for read callbacks to add some statusinfos to the playerrecord
+     * Used for playerlist callbacks to add some statusinfos to the playerrecord
      */
-    protected function extendPlayer($player)
+    final protected function extendPlayer(&$player)
     {
         // a visual x if player is on autosignon
-        $player->x_on_autosignon = $player->autosignon == 1 ? '<i class="fa fa-calendar fa-fixed-width" title="' . $this->txt('raid_autosignon') . '"></i> ' : '';
+        $player->x_on_autosignon = $player->autosignon == 1 ? '<i class="fa fa-clock-o fa-fixed-width" title="' . $this->txt('raid_autosignon') . '"></i> ' : '';
 
         // translated category name
         $categories = array(
@@ -159,9 +179,9 @@ final class PlayerModel extends Model
     }
 
     /**
-     * Used for read callbacks to add actionbars to a playerrecord.
+     * Used for playerlist callbacks to add actionbars to a playerrecord.
      */
-    public function addActionbar($player)
+    final protected function addActionbar(&$player)
     {
         if ($this->checkAccess('raidmanager_perm_player'))
         {
@@ -183,15 +203,12 @@ final class PlayerModel extends Model
         return $player;
     }
 
+    /**
+     * Deletes a player completly from all raidmanager tables
+     * @param int $id_player
+     */
     public function deletePlayer($id_player)
     {
-
-        // define filter and parameter for multiple deletes
-        $filter = 'id_player={int:id_player}';
-        $params = array(
-            'id_player' => $id_player
-        );
-
         // delete player data from this tables
         $models = array(
             'Setlist',
@@ -201,9 +218,14 @@ final class PlayerModel extends Model
         );
 
         foreach ( $models as $model_name )
-            $this->getModel($model_name)->setFilter($filter, $params)->delete();
+            $this->getModel($model_name)->delete(array(
+            	'filter' => 'id_player={int:id_player}',
+                'param' => array(
+                    'id_player' => $id_player
+                )
+            ));
 
-            // and finally delete the player self
+        // and finally delete the player self
         $this->delete($id_player);
     }
 
@@ -217,16 +239,16 @@ final class PlayerModel extends Model
     public function savePlayer($data)
     {
         // Attach data to model
-        $this->setData($data);
+        $this->data = $data;
 
         // Validate userinput
         $this->validate();
 
         // Any error?
         if ($this->hasErrors())
-            return;
+        	return;
 
-            // Init status flags
+        // Init status flags
         $playerstate_changed = false;
         $signup_done = false;
         $autosignon_changed = false;
@@ -235,9 +257,9 @@ final class PlayerModel extends Model
         if ($this->data->autosignon != 0)
             $this->data->autosignon = 1;
 
-            // Check 1: Did playerstate changed?
-            // If a player state changed, it is important to change all raids where
-            // the player is already subscribed.
+        // Check 1: Did playerstate changed?
+        // If a player state changed, it is important to change all raids where
+        // the player is already subscribed.
         if ($this->data->state != $this->data->state_compare)
         {
             // Flag this as changed playerdata
@@ -249,10 +271,7 @@ final class PlayerModel extends Model
                 case 3 :
                     // Add subscription to all future raids
                     $this->getModel('Subscription')->addPlayerToFutureSubs($this->data->id_player, $this->data->autosignon);
-                    $this->getModel('Comment')->deleteByPlayerAndState($this->data->id_player, array(
-                        1,
-                        2
-                    ));
+                    $this->getModel('Comment')->deleteByPlayerAndState($this->data->id_player, array(1,2));
                     $signup_done = true;
                     break;
 
@@ -265,10 +284,7 @@ final class PlayerModel extends Model
                     $this->getModel('Setlist')->deletePlayerFromSetlist($this->data->id_player);
 
                     // Remove all comments by player
-                    $this->getModel('Comment')->deleteByPlayerAndState($this->data->id_player, array(
-                        1,
-                        2
-                    ));
+                    $this->getModel('Comment')->deleteByPlayerAndState($this->data->id_player, array(1,2));
                     break;
             }
         }
@@ -279,7 +295,7 @@ final class PlayerModel extends Model
 
             // After a change of autosignon it is important to update all future raids where this player maybe was set.
             // But we do not do this without care about the check 2 from above.
-        if ($autosignon_changed && !$signup_done && $this->data->state == 3)
+        if ($autosignon_changed && !$signup_done && $this->data->state == 3 && $this->getModel('Raid')->getNumFutureRaids() > 0)
         {
             switch ($this->data->autosignon)
             {
@@ -319,7 +335,7 @@ final class PlayerModel extends Model
         if ($playerstate_changed || $autosignon_changed)
             $this->save();
 
-            // We are done and do a refunc do display the changed data
+        // We are done and do a refunc do display the changed data
         $this->data->action = $playerstate_changed ? 'Complete' : 'Index';
     }
 
@@ -364,16 +380,16 @@ final class PlayerModel extends Model
         if (empty($this->data->char_name))
             $this->addError('char_name', $this->txt('char_name_missing'));
 
-            // Run validator manually because we do not use the save method for
-            // playercreation (see insert() call below in this method) which means
-            // the validator won't be called automatically
+        // Run validator manually because we do not use the save method for
+        // playercreation (see insert() call below in this method) which means
+        // the validator won't be called automatically
         $this->validate();
 
         // No saving with errors present
         if ($this->hasErrors())
             return;
 
-            // set char is_main flag to 1
+        // Flag this char to be mainchar
         $this->data->is_main = 1;
 
         // As we use the char creation from outside, there is no field for char
@@ -388,10 +404,10 @@ final class PlayerModel extends Model
         // Players can have multiple Chars. Here we create the players first char.
         $char_model->saveChar($this->data);
 
-        // Char model errors need to be integrated in this models errors
+        // Char model errors need to be integrated in this models errorlist
         if ($char_model->hasErrors())
         {
-            foreach ( $char_model->errors as $fld => $error )
+            foreach( $char_model->errors as $fld => $error )
             {
                 foreach ( $error as $msg )
                     $this->addError($fld, $msg);
@@ -406,8 +422,8 @@ final class PlayerModel extends Model
         $this->data->state = 2;
 
         // Uusing insert() method of model because we need to write the pk to
-        // the table. This isn't possible with save() because a set id_player
-        // marks the data as an update in save()
+        // the table. This isn't possible with save() because a set pk
+        // marks the data as an update.
         $this->insert();
     }
 

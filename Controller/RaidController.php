@@ -2,333 +2,350 @@
 namespace Web\Apps\Raidmanager\Controller;
 
 use Web\Framework\Lib\Error;
-use	Web\Framework\Lib\Controller;
-use	Web\Framework\Lib\Url;
+use Web\Framework\Lib\Controller;
+use Web\Framework\Lib\Url;
 use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Html\Controls\UiButton;
 
+if (!defined('WEB'))
+    die('Cannot run without WebExt framework...');
+
 /**
- * Basic Raidmanager Controller
- * @author Michael
- * @copyright 2013
- *
+ * Raid controller
+ * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
+ * @package WebExt
+ * @subpackage App Raidmanager
+ * @license BSD
+ * @copyright 2014 by author
  */
 final class RaidController extends Controller
 {
-	protected $access = array(
-		'Edit' => 'raidmanager_perm_raid',
-	    'Save' => 'raidmanager_perm_raid',
-	    'Delete' => 'raidmanager_perm_raid',
-	);
-
-	protected $events = array(
-	    'Complete' => array(
-	        'before' => 'checkForRaidId'
-	     ),
-	    'WidgetNextRaid' => array(
-	        'before' => 'checkForRaidId',
-	    ),
-	);
-
-	/**
-	 *
-	 * @param int $id_raid
-	 */
-	public function Complete($id_raid)
-	{
-		// load calendar
-		$this->Calendar($id_raid);
-
-		// load raid
-		$this->Index($id_raid);
-
-		// the index function replaces the complete raidmanager on call
-		$this->ajax->setTarget('#raidmanager');
-	}
-
-	/**
-	 * Checks for the current raid id in request. If no raid id in request,
-	 * it tries to get the id of the next upcomming raid. If this also fails,
-	 * because of no raids, the raid autoadd function will be started.
-	 */
-	public function checkForRaidId()
-	{
-		// Is there a raid id in the request?
-		if($this->request->checkParam('id_raid') === false)
-		{
-			// Try to get raid id from database
-			$id_raid = $this->model->getNextRaidID();
-
-			if ($id_raid)
-			{
-				// add id_raid to current controllers parameter
-				$this->addParam('id_raid', $id_raid);
-
-				// And publish it via request for other controllers which may need it
-				$this->request->addParam('id_raid',  $id_raid);
-			}
-			else
-			{
-				// The following belongs only to users with config userrights
-				if ($this->checkAccess('raidmanager_perm_config'))
-				{
-					// Autoraid failed and we have no raids in db. Check for not set raiddays.
-					if (!$this->cfg('raid_days'))
-					{
-						// No raiddays found, redirect user to raidmanager config and set a flash message
-						// to select the days to use for raids
-						$this->message->warning($this->txt('no_raid_days_selected'));
-						redirectexit(Url::factory('admin_app_config', array('app_name' => 'raidmanager'))->getUrl());
-					}
-
-					// At this point there is whether a raid id as parameter nor as id from the db.
-					// We have to assume that no future raids exist. show error message and offer a
-					// link to create a raid.
-					$button = UiButton::routeLink('raidmanager_raid_add', null, 'full')->setInner($this->txt('raidmanager_action_raid_add'));
-
-					Throw new Error($this->txt('raidmanager_raid_noraid found') . '<br>' . $button->build());
-				}
-			}
-		}
-	}
-
-	function Calendar($id_raid)
-	{
-		// calendar
-		$this->setVar('calendar', $this->getController('Calendar')->run('index', array('id_raid' => $id_raid)));
-
-		// as ajax ajax refresh calendar area
-		$this->ajax->setTarget('#raidmanager_calendar');
-	}
-
-
-	function Index($id_raid)
-	{
-		// raidinfos
-		$this->Infos($id_raid);
-
-		// -----------------------------
-		// content from other controller
-		// -----------------------------
-
-		// comments
-		$this->setVar('comments', $this->getController('Comment')->run('index', array('id_raid' => $id_raid)));
-
-		// subsriptions
-		$this->setVar('subscriptions',$this->getController('Subscription')->run('index', array('id_raid' => $id_raid)));
-
-		// setups
-		$this->setVar('setups', $this->getController('Setup')->run('complete', array('id_raid' => $id_raid)));
+    protected $access = array(
+        'Edit' => 'raidmanager_perm_raid',
+        'Save' => 'raidmanager_perm_raid',
+        'Delete' => 'raidmanager_perm_raid'
+    );
+    protected $events = array(
+        'Complete' => array(
+            'before' => 'checkForRaidId'
+        ),
+        'WidgetNextRaid' => array(
+            'before' => 'checkForRaidId'
+        )
+    );
+
+    /**
+     *
+     * @param int $id_raid
+     */
+    public function Complete($id_raid)
+    {
+        // load calendar
+        $this->Calendar($id_raid);
+
+        // load raid
+        $this->Index($id_raid);
+
+        // Set the target where to put the contennt of this action on ajax requests
+        $this->setAjaxTarget('#raidmanager');
+    }
+
+    /**
+     * Checks for the current raid id in request.
+     * If no raid id in request,
+     * it tries to get the id of the next upcomming raid. If this also fails,
+     * because of no raids, the raid autoadd function will be started.
+     */
+    public function checkForRaidId()
+    {
+        // Is there a raid id in the request?
+        if ($this->request->checkParam('id_raid') === false)
+        {
+            // Try to get raid id from database
+            $id_raid = $this->model->getNextRaidID();
+
+            if ($id_raid)
+            {
+                // add id_raid to current controllers parameter
+                $this->addParam('id_raid', $id_raid);
+
+                // And publish it via request for other controllers which may need it
+                $this->request->addParam('id_raid', $id_raid);
+            } else
+            {
+                // The following belongs only to users with config userrights
+                if ($this->checkAccess('raidmanager_perm_config'))
+                {
+                    // Autoraid failed and we have no raids in db. Check for not set raiddays.
+                    if (!$this->cfg('raid_days'))
+                    {
+                        // No raiddays found, redirect user to raidmanager config and set a flash message
+                        // to select the days to use for raids
+                        $this->message->warning($this->txt('no_raid_days_selected'));
+                        redirectexit(Url::factory('admin_app_config', array(
+                            'app_name' => 'raidmanager'
+                        ))->getUrl());
+                    }
+
+                    // At this point there is whether a raid id as parameter nor as id from the db.
+                    // We have to assume that no future raids exist. show error message and offer a
+                    // link to create a raid.
+                    $button = UiButton::routeLink('raidmanager_raid_add', null, 'full')->setInner($this->txt('raidmanager_action_raid_add'));
+
+                    Throw new Error($this->txt('raidmanager_raid_noraid found') . '<br>' . $button->build());
+                }
+            }
+        }
+    }
+
+    function Calendar($id_raid)
+    {
+        // calendar
+        $this->setVar('calendar', $this->getController('Calendar')->run('index', array(
+            'id_raid' => $id_raid
+        )));
+
+        // Set the target where to put the contennt of this action on ajax requests
+        $this->setAjaxTarget('#raidmanager_calendar');
+    }
+
+    function Index($id_raid)
+    {
+        // raidinfos
+        $this->Infos($id_raid);
+
+        // -----------------------------
+        // content from other controller
+        // -----------------------------
+
+        // comments
+        $this->setVar('comments', $this->getController('Comment')->run('index', array(
+            'id_raid' => $id_raid
+        )));
 
-		$this->ajax->setTarget('#raidmanager_raid');
+        // subsriptions
+        $this->setVar('subscriptions', $this->getController('Subscription')->run('index', array(
+            'id_raid' => $id_raid
+        )));
 
-	}
+        // setups
+        $this->setVar('setups', $this->getController('Setup')->run('complete', array(
+            'id_raid' => $id_raid
+        )));
 
-	function Infos($id_raid)
-	{
-		// Create actionbar if access granted
-		if ($this->checkUserrights('raidmanager_perm_raid'))
-		{
-			$actionbar = new Actionbar();
+        // Set the target where to put the contennt of this action on ajax requests
+        $this->setAjaxTarget('#raidmanager_raid');
+    }
 
-			$params = array(
-				'id_raid' => $id_raid,
-				'back_to' => $id_raid,
-				'target' => 'raidmanager_infos'
-			);
+    function Infos($id_raid)
+    {
+        // Create actionbar if access granted
+        if ($this->checkUserrights('raidmanager_perm_raid'))
+        {
+            $actionbar = new Actionbar();
 
-			$actionbar->createButton('edit')->setRoute('raidmanager_raid_edit', $params);
-			$actionbar->createButton('new')->setRoute('raidmanager_raid_add', $params);
-			$actionbar->createButton('autoadd')
-							->setRoute('raidmanager_raid_autoadd', $params)
-							->setIcon('calendar')
-							->setTitle($this->txt('raid_autoraid'))
-							->useFull();
-			$actionbar->createButton('delete')->setRoute('raidmanager_raid_delete', $params);
+            $param = array(
+                'id_raid' => $id_raid,
+                'back_to' => $id_raid,
+                'target' => 'raidmanager_infos'
+            );
 
-			$this->setVar('actionbar', $actionbar);
-		}
+            $actionbar->createButton('edit')->setRoute('raidmanager_raid_edit', $param);
+            $actionbar->createButton('new')->setRoute('raidmanager_raid_add', $param);
+            $actionbar->createButton('autoadd')->setRoute('raidmanager_raid_autoadd', $param)->setIcon('calendar')->setTitle($this->txt('raid_autoraid'))->useFull();
+            $actionbar->createButton('delete')->setRoute('raidmanager_raid_delete', $param);
 
-		$this->setVar(array(
-			'data' => $this->model->getInfos($id_raid),
-			'txt_specials' => $this->txt('raid_specials'),
-		));
+            $this->setVar('actionbar', $actionbar);
+        }
 
-		if (isset($data->topic_url))
-			$this->setVar('txt_topiclink', $this->txt('raid_topiclink'));
+        $this->setVar(array(
+            'data' => $this->model->getInfos($id_raid),
+            'txt_specials' => $this->txt('raid_specials')
+        ));
 
-		$this->ajax->setTarget('#raidmanager_infos');
-	}
+        if (isset($data->topic_url))
+            $this->setVar('txt_topiclink', $this->txt('raid_topiclink'));
 
-	function Edit($back_to, $id_raid=null)
-	{
-		$post = $this->request->getPost();
+        $this->setAjaxTarget('#raidmanager_infos');
+    }
 
-		if ($post)
-		{
-			$this->model->saveInfos($post);
+    function Edit($back_to, $id_raid = null)
+    {
+        ## DATA ########################################################################################################
 
-			// save errors?
-			if ($this->model->hasNoErrors())
-			{
-				// no error on saving -> add calendar refresh to ajax
-				$this->ajax->call('Raidmanager', 'Calendar', 'Index', '#raidmanager_calendar', array('id_raid'=>$this->model->data->id_raid));
+        $post = $this->request->getPost();
 
-				// 	go to action set by model save action
-				$this->redirect($this->model->data->action, array('id_raid'=>$this->model->data->id_raid));
+        if ($post)
+        {
+            $this->model->saveInfos($post);
 
-				return;
-			}
-		}
+            if ($this->model->hasNoErrors())
+            {
+                $param =  array(
+                    'id_raid' => $this->model->data->id_raid
+                );
 
-		// ---------------------------------------
-		// DATA
-		// ---------------------------------------
+                // Load info display
+                $this->run($this->model->data->action, $param);
 
-		// load it only if the is no data present
-		if ($this->model->hasNoData())
-			$this->model->getEdit($id_raid);
+                // Update calendar
+                $this->getController('Calendar')->ajax('Index', $param, '#raidmanager_calendar');
 
-		// ------------------------------
-		// TEXT
-		// ------------------------------
-		$this->setVar('headline', $this->txt('raid_headline_' . $this->model->data->mode));
+                return;
+            }
+        }
 
-		// ---------------------------
-		// FORM
-		// ---------------------------
-		$params = array(
-			'back_to'=> $back_to
-		);
+        // Load data only if there is no data present
+        if ($this->model->hasNoData())
+            $this->model->getEdit($id_raid);
 
-		if (isset($id_raid))
-			$params['id_raid'] = $id_raid;
+        ## FORM ########################################################################################################
 
-		$form = $this->getFormDesigner();
+        // Get model bound form designer object
+        $form = $this->getFormDesigner();
 
-		$form->setActionRoute($this->request->getCurrentRoute(), $params);
+        // Predefine some general parameter
+        $param = array(
+            'back_to' => $back_to
+        );
 
-		// Form is ajax
-		#$this->form->isAjax();
+        if (isset($id_raid))
+            $param['id_raid'] = $id_raid;
 
-		// No buttons please
-		$form->noButtons();
+        // Define form action
+        $form->setActionRoute($this->request->getCurrentRoute(), $param);
 
-		// hidden raid id field only on edit
-		if (isset($id_raid))
-			$form->createElement('hidden', 'id_raid');
+        // No buttons please
+        $form->noButtons();
 
-		// Edit or new mode
-		$form->createElement('hidden', 'mode');
+        // hidden raid id field only on edit
+        if (isset($id_raid))
+            $form->createElement('hidden', 'id_raid');
 
-		// Destination field
-		$form->createElement('text', 'destination');
+        // Edit or new mode
+        $form->createElement('hidden', 'mode');
 
-		// Open a new group for the starting date and time
-		$form->openGroup('start_group')->newRow();
+        // Destination field
+        $form->createElement('text', 'destination');
 
-		// date start field
-		$form->createElement('datetime', 'starttime')->setElementWidth('sm-2')->setMinDate(date("Y-m-d"))->setMinuteStepping(15);
+        // Open a new group for the starting date and time
+        $form->openGroup()->newRow();
 
-		// date end field
-		$form->createElement('datetime', 'endtime')->setElementWidth('sm-2')->setMinDate(date("Y-m-d"))->setMinuteStepping(15);
+        // date start field
+        $form->createElement('datetime', 'starttime')->setElementWidth('sm-2')->setMinDate(date("Y-m-d"))->setMinuteStepping(15);
 
-		$form->closeGroup();
+        // date end field
+        $form->createElement('datetime', 'endtime')->setElementWidth('sm-2')->setMinDate(date("Y-m-d"))->setMinuteStepping(15);
 
-		// specials textarea
-		$form->createElement('textarea', 'specials')->setRows(5);
+        $form->closeGroup();
 
-		if(!isset($id_raid))
-			$form->createElement('switch', 'autosignon');
+        // specials textarea
+        $form->createElement('textarea', 'specials')->setRows(5);
 
-		$this->setVar('form', $form);
+        if (!isset($id_raid))
+            $form->createElement('switch', 'autosignon');
 
-		// ---------------------------
-		// ACTIONBAR
-		// ---------------------------
+        $this->setVar('form', $form);
 
-		// create actionbar
-		$actionbar = new Actionbar();
+        ## ACTIONBAR ###################################################################################################
 
-		// prepare button creation
-		$app = 'raidmanager';
-		$ctrl = 'raid';
+        // create actionbar
+        $actionbar = new Actionbar();
 
-		// cancel button
-		$button = $actionbar->createButton('cancel');
+        // prepare button creation
+        $app = 'raidmanager';
+        $ctrl = 'raid';
 
-		$params = array('id_raid' => $back_to);
+        // cancel button
+        $button = $actionbar->createButton('cancel');
 
-		if (isset($id_raid))
-		{
-			// on cancel reload only raidinfos
-			$target = 'raidmanager_infos';
-			$route = 'raidmanager_raid_infos';
-		}
-		else
-		{
-			// on cancel reload complete raid
-			$target = 'raidmanager_raid';
-			$route  = 'raidmanager_raid_data';
-		}
+        $param = array(
+            'id_raid' => $back_to
+        );
 
-		$button->setTarget($target);
-		$button->setRoute($route, $params);
+        if (isset($id_raid))
+        {
+            // on cancel reload only raidinfos
+            $target = 'raidmanager_infos';
+            $route = 'raidmanager_raid_infos';
+        } else
+        {
+            // on cancel reload complete raid
+            $target = 'raidmanager_raid';
+            $route = 'raidmanager_raid_data';
+        }
 
-		// save button
-		$button = $actionbar->createButton('save');
+        $button->setTarget($target);
+        $button->setRoute($route, $param);
 
-		$params = array('back_to' => $back_to);
+        // save button
+        $button = $actionbar->createButton('save');
 
-		if (isset($id_raid))
-			$params['id_raid'] = $id_raid;
+        $param = array(
+            'back_to' => $back_to
+        );
 
-		$button->setRoute($this->request->getCurrentRoute(), $params);
+        if (isset($id_raid))
+            $param['id_raid'] = $id_raid;
 
-		// set the formname we want to post
-		$button->setForm($form->getId());
+        $button->setRoute($this->request->getCurrentRoute(), $param);
 
-		// publish actionbar to view
-		$this->setVar('actionbar', $actionbar);
+        // set the formname we want to post
+        $button->setForm($form->getId());
 
-		// puiblish data to view
-		$this->setVar('edit', $this->model->data );
+        ## VIEW ########################################################################################################
 
-		// some ajax definition for ajax calls
-		$this->ajax->setTarget('#' . $target);
-	}
+        // finally publish all our stuff to the view
+        $this->setVar(array(
+            'headline' => $this->txt('raid_headline_' . $this->model->data->mode),
+            'actionbar' => $actionbar,
+            'edit' => $this->model->data
+        ));
 
-	public function Delete($id_raid)
-	{
-		$this->model->deleteRaid($id_raid);
+        ## AJAX ########################################################################################################
 
-		// redirect to the index page of raidmanager
-		$url = Url::factory('raidmanager_raid_start')->getUrl();
-		$this->doRefresh($url);
-	}
+        // Set the target where to put the contennt of this action on ajax requests
+        $this->setAjaxTarget('#' . $target);
+    }
 
-	public function Autoadd()
-	{
-		// this action has no render result
+    public function Delete($id_raid)
+    {
+        $this->firephp(__METHOD__);
 
-		// no, so let's try to add some raid by autoadding
-		$this->model->autoAddRaids();
+        $this->model->deleteRaid($id_raid);
 
-		if($this->model->hasErrors())
-		{
-			$this->debug($this->model->errors, 'console');
-		}
-		else
-		{
-			$url = URL::factory('raidmanager_raid_start')->getUrl();
-			redirectexit($url);
-		}
-	}
+        $this->firephp('Raid deleted');
 
-	public function Reset()
-	{
-		$this->model->clearAllRaids();
-		$this->Autoadd();
-	}
+        // redirect to the index page of raidmanager
+        $this->doRefresh(Url::factory('raidmanager_raid_start'));
+
+
+
+        // This action has no render result.
+        return false;
+    }
+
+    public function Autoadd()
+    {
+        // this action has no render result
+
+        // no, so let's try to add some raid by autoadding
+        $this->model->autoAddRaids();
+
+        if ($this->model->hasErrors())
+        {
+            $this->debug($this->model->errors, 'console');
+        } else
+        {
+            $url = URL::factory('raidmanager_raid_start')->getUrl();
+            redirectexit($url);
+        }
+    }
+
+    public function Reset()
+    {
+        $this->model->clearAllRaids();
+        $this->Autoadd();
+    }
 }
 ?>

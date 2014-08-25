@@ -6,6 +6,7 @@ use Web\Framework\Lib\Url;
 use Web\Framework\Html\Controls\Actionbar;
 use Web\Framework\Helper\FormDesigner;
 use Web\Framework\Html\Elements\Link;
+use Web\Framework\Lib\Menu;
 
 // Check for direct file access
 if (!defined('WEB'))
@@ -38,7 +39,7 @@ final class PlayerController extends Controller
         $this->Playerlist('inactive');
         $this->Playerlist('active');
 
-        $this->ajax->setTarget('#raidmanager');
+        $this->setAjaxTarget('#raidmanager');
     }
 
     /**
@@ -55,7 +56,7 @@ final class PlayerController extends Controller
         ));
 
         // Targetdefinition for ajax response
-        $this->ajax->setTarget('#raidmanager_playerlist_' . $type);
+        $this->setAjaxTarget('#raidmanager_playerlist_' . $type);
     }
 
     /**
@@ -65,7 +66,7 @@ final class PlayerController extends Controller
     public function Index($id_player)
     {
         $this->setVar('player', $this->model->getPlayer($id_player));
-        $this->ajax->setTarget('#raidmanager_player_' . $id_player);
+        $this->setAjaxTarget('#raidmanager_player_' . $id_player);
     }
 
     /**
@@ -147,7 +148,7 @@ final class PlayerController extends Controller
         // ------------------------------
         // Ajax
         // ------------------------------
-        $this->ajax->setTarget('#raidmanager_player_create');
+        $this->setAjaxTarget('#raidmanager_player_create');
     }
 
     /**
@@ -167,7 +168,11 @@ final class PlayerController extends Controller
 
             if ($this->model->hasNoErrors())
             {
-                $this->Redirect($this->model->data->action, array(
+                // Refresh menu when user becomes active or when he becomes inactive
+                if ($this->model->data->state == 3 || ($this->model->data->state_compare == 3 && $this->model->data->state != 3))
+                    Menu::refreshMenu();
+
+                $this->run($this->model->data->action, array(
                     'id_player' => $id_player
                 ));
                 return;
@@ -178,22 +183,27 @@ final class PlayerController extends Controller
         if ($this->model->hasNoData())
             $this->model->getPlayer($id_player, false);
 
-            // Publish playerdata to view
+        // Publish playerdata to view
         $this->setVar('player', $this->model);
 
-        // Our headline is a class coloured charname enclosed of a link
-        // to the smf profile of the player
-        $url = Url::factory()->setAction('profile')->addParameter('area', 'profile')->addParameter('u', $id_player)->getUrl();
-
+        // Our headline is a class coloured charname enclosed by a link to the smf profile of the player
+        $url = Url::factory()->getUrl(array(
+            'action' => 'profile',
+            'param' => array(
+                'area' => 'profile',
+                'u' => $id_player
+            )
+        ));
         $link = Link::factory()->setInner('<span class="raidmanager_class_' . $this->model->data->class . '">' . $this->model->data->char_name . '</span>')->setTitle($this->txt('player_smfprofile'))->setTarget('_blank')->setHref($url)->build();
-
         $this->setVar('headline', $link);
 
         // Formdesigner
         $form = $this->getFormDesigner();
 
+        // Extend fieldnames by the player id
         $form->extendName($this->model->data->id_player);
 
+        // Set forms action by route
         $form->setActionRoute($this->request->getCurrentRoute(), array(
             'id_player' => $id_player
         ));
@@ -201,14 +211,15 @@ final class PlayerController extends Controller
         // We use actionbars as buttons, so disable the automatic send button
         $form->noButtons();
 
-        // Form fields
+        // Some hidden fields
         $form->createElement('hidden', 'id_player');
         $form->createElement('hidden', 'char_name');
-        $form->createElement('switch', 'autosignon')->hasCompare(true);
+        $form->createElement('switch', 'autosignon')->setCompare($this->model->data->autosignon);
 
         // Playerstate is a select field
         $control = $form->createElement('select', 'state');
 
+        // These playerstates are available
         $states = array(
             0 => 'old',
             1 => 'applicant',
@@ -216,48 +227,38 @@ final class PlayerController extends Controller
             3 => 'active'
         );
 
+        // Adding all states as option
         foreach ( $states as $val => $state )
             $control->newOption($val, $this->txt('player_state_' . $state), $this->model->data->state == $val ? 1 : 0);
 
-            // Playerstate compare for changes
-        $control->hasCompare(true);
+        // Playerstate compare for changes
+        $control->setCompare($this->model->data->state);
 
         // Publish form to view
         $this->setVar('form', $form);
 
-        // ------------------------------
-        // Actionbar
-        // ------------------------------
+        // Create new actionbar
         $actionbar = new Actionbar();
 
-        $params = array(
+        // General actionbar parameter
+        $param = array(
             'id_player' => $id_player
         );
 
-        // cancel button
-        $actionbar->createButton('cancel')->setRoute('raidmanager_player_index', $params);
+        // Cancel button
+        $actionbar->createButton('cancel')->setRoute('raidmanager_player_index', $param);
 
-        // save button
-        $actionbar->createButton('save')->setForm($form->getId())->setRoute('raidmanager_player_edit', $params);
+        // Save button
+        $actionbar->createButton('save')->setForm($form->getId())->setRoute('raidmanager_player_edit', $param);
 
+        // Publish actionbar to view
         $this->setVar('actionbar', $actionbar);
 
-        // ------------------------------
-        // External data
-        // ------------------------------
+        // Get result of charlist controller and publih it to view
         $this->setVar('charlist', $this->getController('Char')->run('Index'));
 
-        // ------------------------------
-        // Ajax response
-        // ------------------------------
-        $this->ajax->setTarget('#raidmanager_player_' . $id_player);
-    }
-
-    /**
-     * Handles save process after player editing
-     */
-    public function Save($id_player)
-    {
+        // Ajax response target
+        $this->setAjaxTarget('#raidmanager_player_' . $id_player);
     }
 
     /**

@@ -5,6 +5,9 @@ use Web\Framework\Lib\Model;
 use Web\Framework\Lib\Data;
 use Web\Framework\Lib\Error;
 
+if (!defined('WEB'))
+    die('Cannot run without WebExt framework...');
+
 /**
  * Setup model
  * @author Michael "Tekkla" Zorn <tekkla@tekkla.de>
@@ -27,10 +30,12 @@ final class SetupModel extends Model
             array('min', array(0, 'number'))
         ),
         'need_damage' => array(
-            'empty'
+            'empty',
+            array('min', array(0, 'number'))
         ),
         'need_heal' => array(
-            'empty'
+            'empty',
+            array('min', array(0, 'number'))
         ),
         'position' => array(
             array('min', array(0, 'number'))
@@ -117,18 +122,6 @@ final class SetupModel extends Model
     }
 
     /**
-     * Deletes all setups for a specific raid
-     * @param int $id_raid
-     */
-    public function deleteByRaid($id_raid)
-    {
-        $this->delete(array(
-        	'filter' => 'id_raid={int:pk}',
-            'param' => array('pk' => $id_raid),
-        ));
-    }
-
-    /**
      * Returns data of a specific setup.
      * @param int $id_setup
      * @return \Web\Framework\Lib\Data
@@ -136,13 +129,17 @@ final class SetupModel extends Model
     public function getInfos($id_setup)
     {
         // Get setupdata
-        $data = $this->find($id_setup);
+        $this->find($id_setup);
 
         // How many setups?
-        $this->setField('COUNT(setups.id_setup) AS num_setups');
-        $this->setFilter('id_raid={int:id_raid}');
-        $this->setParameter('id_raid', $this->data->id_raid);
-        $this->read('ext');
+        $this->read(array(
+            'type' => 'ext',
+            'field' => 'COUNT(setups.id_setup) AS num_setups',
+            'filter' => 'id_raid={int:id_raid}',
+            'param' => array(
+                'id_raid' => $this->data->id_raid
+            ),
+        ));
 
         // Build complete headline
         if ($this->data->need_tank || $this->data->need_damage || $this->data->need_heal)
@@ -157,7 +154,7 @@ final class SetupModel extends Model
      */
     public function saveSetup(Data $data)
     {
-        $this->setData($data);
+        $this->data = $data;
 
         // What edit mode do we have?
         $mode = isset($this->data->id_setup) ? 'update' : 'new';
@@ -187,13 +184,30 @@ final class SetupModel extends Model
     {
         return $this->read(array(
             'type' => 'key',
-        	'field' => 'setups.id_setup',
+            'field' => 'setups.id_setup',
             'join' => array(
                 array('app_raidmanager_raids', 'raids', 'INNER', 'setups.id_raid = raids.id_raid')
             ),
             'filter' => 'raids.starttime>{int:starttime}',
             'param' => array('starttime' => time())
          ));
+    }
+
+    /**
+     * Returns the raid id of a setup
+     * @param int $id_setup
+     * @return int
+     */
+    public function getRaidId($id_setup)
+    {
+        return $this->read(array(
+            'type' => 'val',
+            'field' => 'id_raid',
+            'filter' => 'id_setup={int:id_setup}',
+            'param' => array(
+                'id_setup' => $id_setup
+            )
+        ));
     }
 }
 ?>

@@ -5,7 +5,6 @@ use Web\Framework\Lib\Url;
 use Web\Framework\Lib\App;
 use Web\Framework\Lib\User;
 
-// Check for direct file access
 if (!defined('WEB'))
     die('Cannot run without WebExt framework...');
 
@@ -14,7 +13,6 @@ if (!defined('WEB'))
  * @author Michael Zorn (tekkla@tekkla.de)
  * @copyright 2014
  */
-
 final class Raidmanager extends App
 {
     // Has it's own css file
@@ -443,24 +441,6 @@ final class Raidmanager extends App
             'action' => 'delete'
         ),
         array(
-            'name' => 'stats',
-            'route' => '/stats',
-            'ctrl' => 'stats',
-            'action' => 'index'
-        ),
-        array(
-            'name' => 'stats_subs',
-            'route' => '/stats/subs/[i:month]/[i:year]',
-            'ctrl' => 'stats',
-            'action' => 'subs'
-        ),
-        array(
-            'name' => 'stats_player',
-            'route' => '/stats/player/[i:month]/[i:year]',
-            'ctrl' => 'stats',
-            'action' => 'player'
-        ),
-        array(
             'name' => 'reset',
             'route' => '/reset',
             'ctrl' => 'raid',
@@ -474,8 +454,8 @@ final class Raidmanager extends App
     public function onBefore()
     {
         $html = '
-		<h1>Raidmanager</h1>
-		<div id="raidmanager" class="row">';
+        <h1>Raidmanager</h1>
+        <div id="raidmanager" class="row">';
 
         return $html;
     }
@@ -487,7 +467,7 @@ final class Raidmanager extends App
     public function onAfter()
     {
         $html = '
-		</div>';
+        </div>';
 
         return $html;
     }
@@ -495,7 +475,7 @@ final class Raidmanager extends App
     /*
      * Creates the arrayelements of Raidmanager menu.
      */
-    public function addMenuButtons(&$menu_buttons)
+    public function addMenuButtons(&$menu_buttons=array())
     {
         // Without general access no menu will be created
         if (!$this->generalAccess())
@@ -513,7 +493,7 @@ final class Raidmanager extends App
             $buttons['raidmanager_raid_head'] = array(
                 'title' => $this->txt('raids'),
                 'show' => true,
-                'href' => Url::factory('raidmanager_raid_start')->getUrl(),
+                'href' => Url::getNamedRouteUrl('raidmanager_raid_start'),
                 'sub_buttons' => $calendar
             );
         }
@@ -522,32 +502,26 @@ final class Raidmanager extends App
             // Otherwise check for raidadmin rights and active players to add autoraid button
             if ($this->checkAccess('raidmanager_perm_raid') && $this->getModel('Player')->hasActivePlayer())
             {
-            	$buttons['raidmanager_menu_raid_autoadd'] = array(
-            	    'title' => $this->txt('raid_autoraid'),
-            		'href' => Url::factory('raidmanager_raid_autoadd')->getUrl(),
-            		'show' => true,
-            		'sub_buttons' => array()
+                $buttons['raidmanager_menu_raid_autoadd'] = array(
+                    'title' => $this->txt('raid_autoraid'),
+                    'href' => Url::getNamedRouteUrl('raidmanager_raid_autoadd'),
+                    'show' => true,
+                    'sub_buttons' => array()
             	);
             }
         }
 
         // Add rest of buttons
         $buttons += array(
-            'raidmanager_stats' => array(
-                'title' => $this->txt('stats_headline'),
-                'href' => Url::factory('raidmanager_stats')->getUrl(),
-                'show' => true,
-                'sub_buttons' => array()
-            ),
             'raidmanager_playerlist' => array(
                 'title' => $this->txt('playerlist'),
-                'href' => Url::factory('raidmanager_player_start')->getUrl(),
+                'href' => Url::getNamedRouteUrl('raidmanager_player_start'),
                 'show' => $this->checkAccess('raidmanager_perm_player'),
                 'sub_buttons' => array()
             ),
             'raidmanager_config' => array(
                 'title' => $this->txt('web_config'),
-                'href' => Url::factory('admin_app_config')->addParameter('app_name', 'raidmanager')->getUrl(),
+                'href' => Url::getNamedRouteUrl('admin_app_config', array('app_name' => 'raidmanager')),
                 'show' => $this->checkAccess('raidmanager_perm_config'),
                 'sub_buttons' => array()
             )
@@ -561,6 +535,8 @@ final class Raidmanager extends App
             'sub_buttons' => $buttons,
             'noslice' => true
         );
+
+        return $menu_buttons;
     }
 
     /**
@@ -579,13 +555,16 @@ final class Raidmanager extends App
                 return true;
 
             // All other will be checked for existing playerprofile
-            if ($this->getModel('Player')->read(array(
-                                            	'type' => 'val',
-                                                'field' => 'players.state',
-                                                'filter' => 'players.id_player={int:id_user}',
-                                                'param' => array('id_user' => User::getId())
-                                                )
-            ) == 3)
+            $query = array(
+                'type' => 'val',
+                'field' => 'players.state',
+                'filter' => 'players.id_player={int:id_user}',
+                'param' => array(
+                    'id_user' => User::getId()
+                )
+            );
+
+            if ($this->getModel('Player')->read($query) == 3)
                 return true;
         }
 
